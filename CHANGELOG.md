@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- Context menu structure: all actions are now nested under a single "Re-Tint"
+  parent menu — "Black to Color…", "White to Color…", and (below a separator)
+  "Flatten SVG Layers…" — instead of appearing as separate top-level items.
+- Debug logging (`DebugLog` in `SvgContextMenu`) now writes to
+  `%TEMP%\svgtools_debug.log` (the user's temp directory) instead of
+  `C:\Users\Public\svgtools_debug.log`.
+
+### Fixed
+- Context menu not appearing in Explorer when `.svg` is associated with a browser
+  (e.g. Chrome). Explorer resolves the file's ProgId from the user's UserChoice
+  (`ChromeHTML`), bypassing both the `svgfile` ProgId and the bare `.svg`
+  extension-key handler registrations. Fix: register the handler under
+  `HKLM\SOFTWARE\Classes\SystemFileAssociations\.svg\ShellEx\ContextMenuHandlers`,
+  which Explorer consults regardless of the default-app association. Added to
+  `install.bat` and removal added to `uninstall.bat`.
+
 ## [0.1.0] - 2026-06-11
 
 ### Added

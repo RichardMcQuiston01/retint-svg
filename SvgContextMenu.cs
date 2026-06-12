@@ -25,9 +25,28 @@ namespace SVGToolsShell
     [COMServerAssociation(AssociationType.ClassOfExtension, ".svg")]
     public class SvgContextMenu : SharpContextMenu
     {
+        // Diagnostic log lives in the user's %TEMP% — explorer.exe runs as the
+        // user, so this is always writable (unlike C:\ root or Program Files).
+        private static readonly string LogPath =
+            Path.Combine(Path.GetTempPath(), "svgtools_debug.log");
+
         static SvgContextMenu()
         {
             DebugLog("Assembly loaded into process");
+        }
+
+        private static void DebugLog(string message)
+        {
+            try
+            {
+                File.AppendAllText(
+                    LogPath,
+                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}  {message}\r\n");
+            }
+            catch
+            {
+                // Logging must never take down Explorer.
+            }
         }
 
         // Show the menu for any .svg selection
@@ -42,27 +61,31 @@ namespace SVGToolsShell
             DebugLog("CreateMenu called");
             var menu = new ContextMenuStrip();
 
-            // ── Re-Tint Black → Color ─────────────────────────────────────────
-            var tintBlack = new ToolStripMenuItem("Re-Tint Black to Color…")
+            // ── Re-Tint ▸ Black/White → Color ─────────────────────────────────
+            var reTint = new ToolStripMenuItem("Re-Tint")
+            {
+                Image = CreateSwatch(Color.Black),
+            };
+
+            var tintBlack = new ToolStripMenuItem("Black to Color…")
             {
                 Image = CreateSwatch(Color.Black),
             };
             foreach (var preset in ColorPresets.All)
                 tintBlack.DropDownItems.Add(BuildTintItem(preset, TintTarget.Black));
 
-            menu.Items.Add(tintBlack);
+            reTint.DropDownItems.Add(tintBlack);
 
-            // ── Re-Tint White → Color ─────────────────────────────────────────
-            var tintWhite = new ToolStripMenuItem("Re-Tint White to Color…")
+            var tintWhite = new ToolStripMenuItem("White to Color…")
             {
                 Image = CreateSwatch(Color.White, bordered: true),
             };
             foreach (var preset in ColorPresets.All)
                 tintWhite.DropDownItems.Add(BuildTintItem(preset, TintTarget.White));
 
-            menu.Items.Add(tintWhite);
+            reTint.DropDownItems.Add(tintWhite);
 
-            menu.Items.Add(new ToolStripSeparator());
+            reTint.DropDownItems.Add(new ToolStripSeparator());
 
             // ── Flatten SVG Layers ────────────────────────────────────────────
             var flatten = new ToolStripMenuItem("Flatten SVG Layers…")
@@ -73,7 +96,9 @@ namespace SVGToolsShell
             foreach (var preset in ColorPresets.All)
                 flatten.DropDownItems.Add(BuildFlattenItem(preset));
 
-            menu.Items.Add(flatten);
+            reTint.DropDownItems.Add(flatten);
+
+            menu.Items.Add(reTint);
 
             return menu;
         }
@@ -178,16 +203,6 @@ namespace SVGToolsShell
             return dlg.ShowDialog() == DialogResult.OK
                 ? $"#{dlg.Color.R:X2}{dlg.Color.G:X2}{dlg.Color.B:X2}"
                 : null;
-        }
-
-        private static void DebugLog(string message)
-        {
-            try
-            {
-                File.AppendAllText(@"C:\Users\Public\svgtools_debug.log",
-                    $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}  {message}{Environment.NewLine}");
-            }
-            catch { }
         }
 
         /// <summary>Creates a 16×16 solid-color swatch bitmap for menu icons.</summary>

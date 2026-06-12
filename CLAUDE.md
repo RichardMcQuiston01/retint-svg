@@ -4,9 +4,9 @@
 
 **SVGToolsShell** is a Windows Explorer shell extension (context menu) for `.svg` files, built as a .NET Framework 4.8 COM-visible class library using the [SharpShell](https://github.com/dwmkerr/sharpshell) library.
 
-Right-clicking any `.svg` file in Explorer exposes a cascading "SVG Tools" submenu with:
-- **Re-Tint Black to Color** — replace black fills/strokes with a chosen color
-- **Re-Tint White to Color** — replace white fills/strokes with a chosen color
+Right-clicking any `.svg` file in Explorer adds a single cascading **Re-Tint** menu containing:
+- **Black to Color** — replace black fills/strokes with a chosen color
+- **White to Color** — replace white fills/strokes with a chosen color
 - **Flatten SVG Layers** — merge all `<path>` elements into a single layer with one fill
 
 ---
