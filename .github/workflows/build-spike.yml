@@ -1,0 +1,61 @@
+name: Build Spike (non-blocking)
+
+# Compiles the exploratory MSIX / IExplorerCommand spike
+# (spike/msix-iexplorercommand) so accessibility and other compile errors
+# surface in CI — WITHOUT gating the shippable PRs.
+#
+# Non-blocking by design: the build step is continue-on-error, so a broken
+# spike is reported in the run summary but never fails the check. The spike is
+# a scaffold with intentionally-incomplete interop, so it must not block merges.
+#
+# Path-filtered to spike/** so it does not run on PRs that don't touch the
+# spike (e.g. the release-prep PR, whose branch has no spike directory).
+
+on:
+  pull_request:
+    paths:
+      - 'spike/**'
+      - '.github/workflows/build-spike.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'spike/**'
+      - '.github/workflows/build-spike.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-spike-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-spike:
+    runs-on: windows-latest
+
+    steps:
+      # Actions pinned to commit SHAs (see .github/workflows/build.yml).
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: '8.0.x'
+
+      # net8.0-windows handler with EnableComHosting; its ProjectReference pulls
+      # in SvgTools.Core, so this also confirms the shared lib builds under .NET 8.
+      - name: Build spike
+        id: build
+        continue-on-error: true
+        run: dotnet build spike/msix-iexplorercommand/src/SvgTools.ShellExtension.csproj -c Release
+
+      - name: Report result (non-blocking)
+        shell: bash
+        run: |
+          if [ "${{ steps.build.outcome }}" = "success" ]; then
+            echo "✅ Spike compiled." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "⚠️ Spike did NOT compile — this is non-blocking and does not fail the PR. See the Build spike step logs." >> "$GITHUB_STEP_SUMMARY"
+          fi

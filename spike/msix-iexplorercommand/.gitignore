@@ -1,0 +1,8 @@
+# Spike build artifacts
+build/
+bin/
+obj/
+*.msix
+*.msixbundle
+Assets/
+package/stub/

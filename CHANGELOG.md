@@ -14,7 +14,11 @@ All notable changes to this project will be documented in this file.
   classic net48 handler and a future Windows 11 `IExplorerCommand` handler.
 - `.github/workflows/build.yml` — a GitHub Actions workflow that builds both
   `SvgTools.Core` and `SVGToolsShell` (Release) on Windows for every PR and on
-  pushes to `main`, and uploads the build output as an artifact.
+  pushes to `main`, and uploads the build output as an artifact. The workflow's
+  actions are pinned to commit SHAs for reproducibility.
+- `.github/dependabot.yml` — weekly Dependabot updates for the `github-actions`
+  ecosystem, so the SHA-pinned actions get bumped via reviewed PRs (grouped
+  into one PR) rather than drifting.
 
 ### Changed
 - Extracted `SvgProcessor.cs` out of the shell project into `SvgTools.Core`;
