@@ -16,8 +16,13 @@ namespace SvgTools.ShellExtension.Interop
     //  (especially IShellItemArray enumeration) on Windows 11 before trusting.
     // ─────────────────────────────────────────────────────────────────────────
 
+    // These are the COM-facing contract: the shell queries the handler through
+    // IExplorerCommand, so the interfaces/enums must be public — a public
+    // ComVisible command class cannot expose internal types through its public
+    // interface methods (CS0050/CS0051), nor derive from an internal base.
+
     /// <summary>HRESULT constants used by shell command handlers.</summary>
-    internal static class HResults
+    public static class HResults
     {
         public const int S_OK = 0;
         public const int S_FALSE = 1;
@@ -27,7 +32,7 @@ namespace SvgTools.ShellExtension.Interop
 
     /// <summary>EXPCMDSTATE — enabled/disabled/hidden state of a command.</summary>
     [Flags]
-    internal enum EXPCMDSTATE
+    public enum EXPCMDSTATE
     {
         ECS_ENABLED = 0x00,
         ECS_DISABLED = 0x01,
@@ -39,7 +44,7 @@ namespace SvgTools.ShellExtension.Interop
 
     /// <summary>EXPCMDFLAGS — presentation flags (submenus, separators, …).</summary>
     [Flags]
-    internal enum EXPCMDFLAGS
+    public enum EXPCMDFLAGS
     {
         ECF_DEFAULT = 0x00,
         ECF_HASSUBCOMMANDS = 0x01,
@@ -60,7 +65,7 @@ namespace SvgTools.ShellExtension.Interop
     [ComImport]
     [Guid("a08ce4d0-fa25-44ab-b57c-c7b1c323e0b9")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IExplorerCommand
+    public interface IExplorerCommand
     {
         [PreserveSig] int GetTitle(IShellItemArray? psiItemArray, [MarshalAs(UnmanagedType.LPWStr)] out string? ppszName);
         [PreserveSig] int GetIcon(IShellItemArray? psiItemArray, [MarshalAs(UnmanagedType.LPWStr)] out string? ppszIcon);
@@ -76,7 +81,7 @@ namespace SvgTools.ShellExtension.Interop
     [ComImport]
     [Guid("a88826f8-186f-4987-aade-ea0cef8fbfe8")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IEnumExplorerCommand
+    public interface IEnumExplorerCommand
     {
         [PreserveSig] int Next(uint celt,
             [Out, MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.Interface, SizeParamIndex = 0)] IExplorerCommand[] pUICommand,
@@ -94,7 +99,7 @@ namespace SvgTools.ShellExtension.Interop
     [ComImport]
     [Guid("b63ea76d-1f85-456f-a19c-48159efa858b")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IShellItemArray
+    public interface IShellItemArray
     {
         // Only the members this handler uses are declared; the rest of the
         // vtable is elided intentionally (declaring a partial IShellItemArray
@@ -108,7 +113,7 @@ namespace SvgTools.ShellExtension.Interop
     [ComImport]
     [Guid("43826d1e-e718-42ee-bc55-a1e261c37bfe")]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-    internal interface IShellItem
+    public interface IShellItem
     {
         [PreserveSig] int BindToHandler(IntPtr pbc, ref Guid bhid, ref Guid riid, out IntPtr ppv);
         [PreserveSig] int GetParent(out IShellItem ppsi);
@@ -117,7 +122,7 @@ namespace SvgTools.ShellExtension.Interop
         [PreserveSig] int Compare(IShellItem psi, uint hint, out int piOrder);
     }
 
-    internal enum SIGDN : uint
+    public enum SIGDN : uint
     {
         SIGDN_FILESYSPATH = 0x80058000,
     }

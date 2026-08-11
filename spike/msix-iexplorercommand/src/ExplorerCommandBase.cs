@@ -11,7 +11,9 @@ namespace SvgTools.ShellExtension
     //  (for leaves) what to do on Invoke.
     // ─────────────────────────────────────────────────────────────────────────
 
-    internal abstract class ExplorerCommandBase : IExplorerCommand
+    // Public because the concrete command (ReTintCommand) is public + ComVisible
+    // for COM hosting, and a public class cannot derive from an internal base.
+    public abstract class ExplorerCommandBase : IExplorerCommand
     {
         /// <summary>The label shown in the menu.</summary>
         protected abstract string Title { get; }
@@ -98,7 +100,7 @@ namespace SvgTools.ShellExtension
     }
 
     /// <summary>Minimal IEnumExplorerCommand over a fixed array of commands.</summary>
-    internal sealed class ExplorerCommandEnumerator : IEnumExplorerCommand
+    public sealed class ExplorerCommandEnumerator : IEnumExplorerCommand
     {
         private readonly IExplorerCommand[] _commands;
         private int _index;
@@ -115,7 +117,21 @@ namespace SvgTools.ShellExtension
             return fetched == celt ? HResults.S_OK : HResults.S_FALSE;
         }
 
-        public int Skip(uint celt) { _index += (int)celt; return HResults.S_OK; }
+        public int Skip(uint celt)
+        {
+            // Per IEnumXxx::Skip: if fewer than celt remain, advance to the end
+            // and report S_FALSE. The uint comparison avoids an overflowing cast.
+            int remaining = _commands.Length - _index;
+            if (celt > (uint)remaining)
+            {
+                _index = _commands.Length;
+                return HResults.S_FALSE;
+            }
+
+            _index += (int)celt;
+            return HResults.S_OK;
+        }
+
         public int Reset() { _index = 0; return HResults.S_OK; }
 
         public int Clone(out IEnumExplorerCommand? ppenum)
