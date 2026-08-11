@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SPIKE — package manifest for the Win11 IExplorerCommand context menu.
+
+  This is the artifact that makes the extension (a) appear in the Windows 11
+  MAIN context menu and (b) eligible for the Microsoft Store. It declares:
+    1. an in-proc COM surrogate server for the handler DLL, and
+    2. a file-explorer context-menu extension bound to .svg, pointing at the
+       handler's CLSID.
+
+  BEFORE USE:
+    • Set Identity/@Publisher to match your code-signing certificate subject
+      EXACTLY (e.g. "CN=Richard McQuiston, O=..., C=US"). For a Store package,
+      Partner Center assigns Identity/@Name and @Publisher — use those values.
+    • The CLSID below (SvgTools.ShellExtension.ReTintCommand) must match the
+      [Guid] on the root command class in ReTintCommands.cs.
+    • Provide the Assets\ logos referenced under <Properties> and
+      <uap:VisualElements>, or trim them to what your package actually ships.
+-->
+<Package
+    xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+    xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+    xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+    xmlns:com="http://schemas.microsoft.com/appx/manifest/com/windows10"
+    xmlns:desktop4="http://schemas.microsoft.com/appx/manifest/desktop/windows10/4"
+    xmlns:desktop5="http://schemas.microsoft.com/appx/manifest/desktop/windows10/5"
+    xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+    IgnorableNamespaces="uap uap3 com desktop4 desktop5 rescap">
+
+  <Identity
+      Name="RichardMcQuiston.SVGTools"
+      Publisher="CN=REPLACE-WITH-YOUR-CERT-SUBJECT"
+      Version="1.0.0.0"
+      ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>SVG Tools</DisplayName>
+    <PublisherDisplayName>Richard McQuiston</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <!-- 19041 = Windows 10 2004; the modern menu itself is Win11 (22000+),
+         but the manifest schema is honored from 2004 up. -->
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.22621.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <!--
+      A context-menu-only package still needs one Application entry to carry
+      the extensions. There is no interactive app here, so this points at a
+      minimal stub/launcher exe. Options:
+        • ship a tiny no-op launcher exe, or
+        • repurpose it as the "Custom color" helper (see README open problem #2).
+      AppListEntry="none" hides it from the Start menu.
+    -->
+    <Application Id="SVGTools" Executable="SvgTools.Launcher.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+          AppListEntry="none"
+          DisplayName="SVG Tools"
+          Description="Re-Tint and flatten SVG files from the Explorer context menu."
+          BackgroundColor="transparent"
+          Square150x150Logo="Assets\Square150x150Logo.png"
+          Square44x44Logo="Assets\Square44x44Logo.png" />
+
+      <Extensions>
+        <!-- (1) Register the handler DLL as an in-proc COM surrogate server.
+             Path is the .NET COM-hosting shim produced by EnableComHosting.
+             The Class Id is the root command's CLSID. -->
+        <com:Extension Category="windows.comServer">
+          <com:ComServer>
+            <com:SurrogateServer DisplayName="SVG Tools Context Menu">
+              <com:Class
+                  Id="B2A9F2C4-3E17-4D8A-9C21-7F6E5D4C3B2A"
+                  Path="SvgTools.ShellExtension.comhost.dll"
+                  ThreadingModel="STA" />
+            </com:SurrogateServer>
+          </com:ComServer>
+        </com:Extension>
+
+        <!-- (2) Bind that CLSID as a file-explorer context-menu verb for .svg.
+             This is what places "Re-Tint" in the Windows 11 main menu. -->
+        <desktop4:Extension Category="windows.fileExplorerContextMenus">
+          <desktop4:FileExplorerContextMenus>
+            <desktop5:ItemType Type=".svg">
+              <desktop5:Verb Id="SVGToolsReTint" Clsid="B2A9F2C4-3E17-4D8A-9C21-7F6E5D4C3B2A" />
+            </desktop5:ItemType>
+          </desktop4:FileExplorerContextMenus>
+        </desktop4:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>
