@@ -21,7 +21,7 @@ namespace SVGToolsShell
     ///   or run:  [System.Guid]::NewGuid()  in PowerShell.
     /// </summary>
     [ComVisible(true)]
-    [Guid("a64a7e95-943d-4f79-891a-1e1176f2fc20")]
+    [Guid("FC258F52-702A-4AC2-BA22-43F59C7DC682")]
     [COMServerAssociation(AssociationType.ClassOfExtension, ".svg")]
     public class SvgContextMenu : SharpContextMenu
     {
@@ -35,6 +35,7 @@ namespace SVGToolsShell
             DebugLog("Assembly loaded into process");
         }
 
+        [System.Diagnostics.Conditional("DEBUG")]
         private static void DebugLog(string message)
         {
             try

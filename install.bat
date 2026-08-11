@@ -48,7 +48,7 @@ echo.
 
 :: Register the context menu handler directly under the .svg extension
 echo Registering .svg context menu handler...
-reg add "HKCR\.svg\shellex\ContextMenuHandlers\SVGToolsShell" /ve /d "{a64a7e95-943d-4f79-891a-1e1176f2fc20}" /f >nul
+reg add "HKCR\.svg\shellex\ContextMenuHandlers\SVGToolsShell" /ve /d "{FC258F52-702A-4AC2-BA22-43F59C7DC682}" /f >nul
 if errorlevel 1 (
     echo ERROR: Failed to register context menu handler.
     pause
@@ -60,7 +60,7 @@ if errorlevel 1 (
 :: Without it, the handler is never queried when .svg is associated with a
 :: browser (e.g. ChromeHTML), because the svgfile ProgId is bypassed.
 echo Registering SystemFileAssociations handler...
-reg add "HKLM\SOFTWARE\Classes\SystemFileAssociations\.svg\ShellEx\ContextMenuHandlers\SVGToolsShell" /ve /d "{a64a7e95-943d-4f79-891a-1e1176f2fc20}" /f >nul
+reg add "HKLM\SOFTWARE\Classes\SystemFileAssociations\.svg\ShellEx\ContextMenuHandlers\SVGToolsShell" /ve /d "{FC258F52-702A-4AC2-BA22-43F59C7DC682}" /f >nul
 if errorlevel 1 (
     echo ERROR: Failed to register SystemFileAssociations handler.
     pause
@@ -69,7 +69,7 @@ if errorlevel 1 (
 
 :: Add to Windows shell extension approved list (required to load)
 echo Approving shell extension...
-reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved" /v "{a64a7e95-943d-4f79-891a-1e1176f2fc20}" /d "SVGToolsShell" /f >nul
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved" /v "{FC258F52-702A-4AC2-BA22-43F59C7DC682}" /d "SVGToolsShell" /f >nul
 if errorlevel 1 (
     echo ERROR: Failed to approve shell extension.
     pause

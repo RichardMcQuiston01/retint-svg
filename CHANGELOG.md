@@ -4,7 +4,29 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- `installer/SVGToolsShell.iss` — an Inno Setup script that builds an
+  uninstallable installer (Add/Remove Programs entry) as an alternative to the
+  raw `install.bat`/`uninstall.bat` flow. Includes a code-signing hook and
+  documented signing steps for public distribution.
+- `SvgTools.Core` — a shared `netstandard2.0` project holding the UI-agnostic
+  SVG logic (`SvgProcessor`, `TintTarget`), so the same code can back both the
+  classic net48 handler and a future Windows 11 `IExplorerCommand` handler.
+- `.github/workflows/build.yml` — a GitHub Actions workflow that builds both
+  `SvgTools.Core` and `SVGToolsShell` (Release) on Windows for every PR and on
+  pushes to `main`, and uploads the build output as an artifact.
+
 ### Changed
+- Extracted `SvgProcessor.cs` out of the shell project into `SvgTools.Core`;
+  `SVGToolsShell` now references it as a project. Types remain in the
+  `SVGToolsShell` namespace, so no call sites changed. `SvgTools.Core.dll` is
+  emitted alongside `SVGToolsShell.dll` and is picked up by the installer.
+- Regenerated the COM CLSID (`Guid` on `SvgContextMenu`, plus matching
+  `install.bat`/`uninstall.bat` registry entries) to a deployment-unique value.
+- Debug logging is now compiled out of Release builds (`DebugLog` marked
+  `[Conditional("DEBUG")]`), so shipping binaries no longer write
+  `%TEMP%\svgtools_debug.log` on every menu open.
+- Removed the unused `Newtonsoft.Json` package reference from the project.
 - Context menu structure: all actions are now nested under a single "Re-Tint"
   parent menu — "Black to Color…", "White to Color…", and (below a separator)
   "Flatten SVG Layers…" — instead of appearing as separate top-level items.

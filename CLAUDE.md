@@ -33,14 +33,26 @@ Right-clicking any `.svg` file in Explorer adds a single cascading **Re-Tint** m
 
 ```
 SVGToolsShell/
-├── SVGToolsShell.csproj    # Class library, net48, COM-visible
+├── SVGToolsShell.csproj    # Class library, net48, COM-visible (the shell handler)
 ├── ColorPresets.cs         # Named color palette for all submenus
-├── SvgProcessor.cs         # Pure SVG manipulation logic (Tint, Flatten)
 ├── SvgContextMenu.cs       # SharpShell handler — builds the Explorer menu
+├── SvgTools.Core/          # Shared, UI-agnostic SVG logic (netstandard2.0)
+│   ├── SvgTools.Core.csproj
+│   └── SvgProcessor.cs     # Pure SVG manipulation logic (Tint, Flatten)
 ├── install.bat             # Registers DLL via RegAsm (run as Administrator)
 ├── uninstall.bat           # Unregisters and restarts Explorer
 └── CLAUDE.md               # This file
 ```
+
+> **Why the split?** `SvgProcessor` (and `TintTarget`) live in a separate
+> `SvgTools.Core` project targeting **netstandard2.0** so the exact same logic
+> can be referenced by both the classic net48 handler *and* a future
+> Windows 11 `IExplorerCommand` / .NET 8 handler, without duplicating code.
+> The types stay in the `SVGToolsShell` namespace so consumers compile
+> unchanged. Core carries no `System.Drawing`/WinForms dependency — only
+> `System.IO`, `RegularExpressions`, and `Xml.Linq` — which is what keeps it
+> portable. `SvgTools.Core.dll` is emitted alongside `SVGToolsShell.dll` in the
+> build output and travels with it during registration.
 
 ---
 

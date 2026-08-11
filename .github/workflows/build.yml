@@ -1,0 +1,52 @@
+name: Build
+
+# Builds both projects on every PR and on pushes to main:
+#   • SvgTools.Core        (netstandard2.0, shared SVG logic)
+#   • SVGToolsShell        (net48, the SharpShell context-menu handler)
+#
+# Runs on windows-latest because the shell handler targets .NET Framework 4.8,
+# whose reference assemblies ship with the Windows runner image. Building the
+# shell project also builds its SvgTools.Core project reference; Core is built
+# first on its own to confirm it still compiles independently (which is what
+# keeps it portable to the future .NET 8 IExplorerCommand handler).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      # Third-party actions are pinned to full commit SHAs (not mutable @vN tags)
+      # so runs are reproducible and resistant to a tag being repointed upstream.
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build SvgTools.Core (netstandard2.0)
+        run: dotnet build SvgTools.Core/SvgTools.Core.csproj -c Release
+
+      - name: Build SVGToolsShell (net48)
+        run: dotnet build SVGToolsShell.csproj -c Release
+
+      - name: Upload build output
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: SVGToolsShell-Release
+          path: bin/Release/net48/
+          if-no-files-found: error

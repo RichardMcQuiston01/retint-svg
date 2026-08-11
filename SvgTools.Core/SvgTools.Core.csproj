@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Shared, UI-agnostic SVG manipulation logic (SvgProcessor + TintTarget).
+
+    Targets netstandard2.0 so it can be referenced by BOTH shell extensions:
+      • SVGToolsShell        (net48, classic IContextMenu / SharpShell)
+      • SvgTools.ShellExtension (net8.0, Win11 IExplorerCommand — see the
+                                 spike/ branch)
+
+    Types intentionally remain in the SVGToolsShell namespace so existing
+    consumers compile unchanged. The assembly is named SvgTools.Core.
+
+    Contains only System.IO / RegularExpressions / Xml.Linq — no System.Drawing
+    or WinForms — which is what keeps it portable across both targets.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>SvgTools.Core</AssemblyName>
+    <RootNamespace>SVGToolsShell</RootNamespace>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+</Project>
