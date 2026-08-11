@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    SPIKE: .NET 8 in-proc COM server for the Windows 11 IExplorerCommand menu.
+
+    EnableComHosting makes the build emit a native shim,
+    "SvgTools.ShellExtension.comhost.dll", which is the DLL the package
+    manifest registers as the COM surrogate server. The shim exposes
+    DllGetClassObject/DllCanUnloadNow and a CLSID->type map for every
+    [ComVisible] [Guid] class (here: ReTintCommand), so no hand-written
+    class factory is needed.
+
+    Reuse: this project references the shared netstandard2.0 "SvgTools.Core"
+    project (repo root), which owns SvgProcessor + TintTarget. The same
+    assembly backs the classic net48 handler, so the SVG logic exists in
+    exactly one place. Core's types live in the SVGToolsShell namespace, so
+    ReTintCommands.cs consumes them via `using SVGToolsShell;`.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>SvgTools.ShellExtension</AssemblyName>
+    <RootNamespace>SvgTools.ShellExtension</RootNamespace>
+
+    <!-- Produce SvgTools.ShellExtension.comhost.dll (the in-proc COM server). -->
+    <EnableComHosting>true</EnableComHosting>
+
+    <!-- Shell extensions are not CLS/COM-registered via the registry here;
+         the MSIX manifest provides registration. Keep the assembly COM-visible
+         only where explicitly attributed. -->
+    <ComVisible>false</ComVisible>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Shared SVG logic (SvgProcessor + TintTarget), single source of truth. -->
+    <ProjectReference Include="..\..\..\SvgTools.Core\SvgTools.Core.csproj" />
+  </ItemGroup>
+
+</Project>
