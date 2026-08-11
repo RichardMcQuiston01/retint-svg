@@ -12,6 +12,9 @@ All notable changes to this project will be documented in this file.
 - `SvgTools.Core` — a shared `netstandard2.0` project holding the UI-agnostic
   SVG logic (`SvgProcessor`, `TintTarget`), so the same code can back both the
   classic net48 handler and a future Windows 11 `IExplorerCommand` handler.
+- `.github/workflows/build.yml` — a GitHub Actions workflow that builds both
+  `SvgTools.Core` and `SVGToolsShell` (Release) on Windows for every PR and on
+  pushes to `main`, and uploads the build output as an artifact.
 
 ### Changed
 - Extracted `SvgProcessor.cs` out of the shell project into `SvgTools.Core`;
