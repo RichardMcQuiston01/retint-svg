@@ -30,8 +30,8 @@ manifest. This spike works out *how* and *how much effort*.
                         ┌───────────────────────────────────────┐
                         │  SvgTools.Core  (netstandard2.0)       │
                         │  • SvgProcessor  (Tint / Flatten)      │  ← shared, unchanged logic
-                        │  • ColorPreset   (Label + Hex only)    │
-                        └───────────────┬───────────────────────┘
+                        │  • TintTarget                          │     (color list stays per-handler
+                        └───────────────┬───────────────────────┘      for now — see below)
                         ┌───────────────┴───────────────┐
         ┌───────────────▼───────────────┐   ┌───────────▼───────────────────────┐
         │  SVGToolsShell (net48)        │   │  SvgTools.ShellExtension (net8.0)  │
@@ -62,7 +62,11 @@ process, not directly inside `explorer.exe`.** That sidesteps the classic
 forced shell extensions to be C++. Combined with .NET 8's
 `<EnableComHosting>` (which emits a native `*.comhost.dll` that acts as the
 in-proc COM server), a managed `IExplorerCommand` handler becomes viable —
-**and it lets us reuse `SvgProcessor` verbatim.**
+**and it lets us reuse `SvgProcessor` verbatim.** That reuse is already wired:
+`src/SvgTools.ShellExtension.csproj` has a `ProjectReference` to the shared
+`SvgTools.Core` (netstandard2.0) project, the same assembly the classic net48
+handler consumes. The preset color list is still declared per-handler (the
+spike's `Palette`), since Core is intentionally kept free of any color/UI model.
 
 ### Language choice: C# vs C++
 
@@ -107,8 +111,10 @@ Re-Tint                         ← root command (ECF_HASSUBCOMMANDS)
   handler calls today.
 - **Icons** come from `GetIcon()` (a resource/path string), not a `Bitmap`.
   The per-color swatches would become small `.ico`/PNG resources or be dropped
-  for v1 — hence `ColorPreset` in `SvgTools.Core` needs only `Label` + `Hex`,
-  no `System.Drawing.Color`.
+  for v1 — so the handler's `Palette` needs only `Label` + `Hex`, no
+  `System.Drawing.Color`. (If the color list is later promoted into
+  `SvgTools.Core` as a shared `Label`+`Hex` model, keep it free of
+  `System.Drawing` so Core stays portable.)
 
 See `src/ReTintCommands.cs` for the skeleton of this tree.
 
@@ -176,7 +182,7 @@ dotnet publish spike/msix-iexplorercommand/src/SvgTools.ShellExtension.csproj `
 | Task | Estimate |
 |---|---|
 | Feasibility gate: hello-world `IExplorerCommand` renders in Win11 menu | 1–2 days |
-| Extract `SvgTools.Core` (netstandard2.0) shared lib | 0.5 day |
+| ~~Extract `SvgTools.Core` (netstandard2.0) shared lib~~ | ✅ done — referenced by this project |
 | Full Re-Tint command tree + icons + invoke wiring | 2–3 days |
 | Sparse-package build/sign/register scripts hardened | 1 day |
 | Toast/feedback + Custom-color decision + polish | 1–2 days |

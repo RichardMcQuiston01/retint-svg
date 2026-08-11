@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using SvgTools.ShellExtension.Interop;
-using SVGToolsShell; // SvgProcessor + TintTarget, reused verbatim from the repo root
+using SVGToolsShell; // SvgProcessor + TintTarget, from the shared SvgTools.Core project
 
 namespace SvgTools.ShellExtension
 {
@@ -15,10 +15,11 @@ namespace SvgTools.ShellExtension
     //      ├── White to Color…   → tint white → <color>
     //      └── Flatten SVG Layers…→ flatten → <color>
     //
-    //  In a real build, SvgProcessor/ColorPresets would move into a shared
-    //  netstandard2.0 "SvgTools.Core" project referenced by both this handler
-    //  and the classic net48 extension. For the spike the csproj <Compile>-links
-    //  the existing source files directly (see SvgTools.ShellExtension.csproj).
+    //  SvgProcessor + TintTarget come from the shared netstandard2.0
+    //  "SvgTools.Core" project (referenced by SvgTools.ShellExtension.csproj),
+    //  the same assembly the classic net48 extension uses. The color list below
+    //  stays local because Core is deliberately UI-agnostic (no color/preset
+    //  model); see README open problem #2.
     // ─────────────────────────────────────────────────────────────────────────
 
     /// <summary>Preset colors for the modern menu — label + hex only (no Bitmap).</summary>

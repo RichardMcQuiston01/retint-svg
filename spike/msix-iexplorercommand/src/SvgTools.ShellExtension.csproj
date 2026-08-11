@@ -10,11 +10,11 @@
     [ComVisible] [Guid] class (here: ReTintCommand), so no hand-written
     class factory is needed.
 
-    Reuse: rather than duplicate the SVG logic, this project <Compile>-links
-    the existing SvgProcessor.cs from the repo root (it is pure
-    System.IO/Regex/Xml.Linq and ports to .NET 8 unchanged). For a real
-    implementation, extract SvgProcessor into a shared netstandard2.0
-    "SvgTools.Core" project referenced by both extensions instead of linking.
+    Reuse: this project references the shared netstandard2.0 "SvgTools.Core"
+    project (repo root), which owns SvgProcessor + TintTarget. The same
+    assembly backs the classic net48 handler, so the SVG logic exists in
+    exactly one place. Core's types live in the SVGToolsShell namespace, so
+    ReTintCommands.cs consumes them via `using SVGToolsShell;`.
   -->
 
   <PropertyGroup>
@@ -36,8 +36,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- Reuse the shipping SVG logic without copying it. -->
-    <Compile Include="..\..\..\SvgProcessor.cs" Link="Shared\SvgProcessor.cs" />
+    <!-- Shared SVG logic (SvgProcessor + TintTarget), single source of truth. -->
+    <ProjectReference Include="..\..\..\SvgTools.Core\SvgTools.Core.csproj" />
   </ItemGroup>
 
 </Project>
