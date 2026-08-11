@@ -151,6 +151,11 @@ dotnet publish spike/msix-iexplorercommand/src/SvgTools.ShellExtension.csproj `
 ./spike/msix-iexplorercommand/package/build.ps1
 ```
 
+CI note: `.github/workflows/build-spike.yml` compiles this project on Windows
+whenever `spike/**` changes. It is **non-blocking** (the build step is
+`continue-on-error`), so a broken scaffold reports in the run summary but never
+fails the PR — it exists to catch compile regressions, not to gate merges.
+
 ## Open problems / decisions to make before committing to this
 
 1. **Feasibility gate (do this first).** Confirm a managed `IExplorerCommand`
