@@ -10,6 +10,5 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="SharpShell" Version="2.7.2" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 </Project>

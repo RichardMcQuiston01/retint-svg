@@ -29,7 +29,7 @@ if not exist "%DLL%" (
 echo Removing registry entries...
 reg delete "HKCR\.svg\shellex\ContextMenuHandlers\SVGToolsShell" /f >nul 2>&1
 reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.svg\ShellEx\ContextMenuHandlers\SVGToolsShell" /f >nul 2>&1
-reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved" /v "{a64a7e95-943d-4f79-891a-1e1176f2fc20}" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved" /v "{FC258F52-702A-4AC2-BA22-43F59C7DC682}" /f >nul 2>&1
 
 echo.
 echo Restarting Windows Explorer...
