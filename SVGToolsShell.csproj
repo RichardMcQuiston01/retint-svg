@@ -11,4 +11,13 @@
   <ItemGroup>
     <PackageReference Include="SharpShell" Version="2.7.2" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Shared, portable SVG logic (SvgProcessor + TintTarget). -->
+    <ProjectReference Include="SvgTools.Core\SvgTools.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The root project globs *.cs recursively; the Core project owns the
+         files under SvgTools.Core\, so exclude that subtree from this build. -->
+    <Compile Remove="SvgTools.Core\**\*.cs" />
+  </ItemGroup>
 </Project>

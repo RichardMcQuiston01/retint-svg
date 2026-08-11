@@ -9,8 +9,15 @@ All notable changes to this project will be documented in this file.
   uninstallable installer (Add/Remove Programs entry) as an alternative to the
   raw `install.bat`/`uninstall.bat` flow. Includes a code-signing hook and
   documented signing steps for public distribution.
+- `SvgTools.Core` — a shared `netstandard2.0` project holding the UI-agnostic
+  SVG logic (`SvgProcessor`, `TintTarget`), so the same code can back both the
+  classic net48 handler and a future Windows 11 `IExplorerCommand` handler.
 
 ### Changed
+- Extracted `SvgProcessor.cs` out of the shell project into `SvgTools.Core`;
+  `SVGToolsShell` now references it as a project. Types remain in the
+  `SVGToolsShell` namespace, so no call sites changed. `SvgTools.Core.dll` is
+  emitted alongside `SVGToolsShell.dll` and is picked up by the installer.
 - Regenerated the COM CLSID (`Guid` on `SvgContextMenu`, plus matching
   `install.bat`/`uninstall.bat` registry entries) to a deployment-unique value.
 - Debug logging is now compiled out of Release builds (`DebugLog` marked
