@@ -123,9 +123,17 @@ Then update `SvgContextMenu.cs`:
 [Guid("YOUR-NEW-GUID-HERE")]
 ```
 
+## Support
+
+If this library saved you some reverse-engineering, consider [buying me a coffee](https://donate.stripe.com/00w5kD3Gj1Xo9v7gVOcs800). ☕
+
 ## References
 
 - [SharpShell GitHub](https://github.com/dwmkerr/sharpshell)
 - [SharpShell CodeProject article](https://www.codeproject.com/Articles/512956/NET-Shell-Extensions-Shell-Context-Menus)
 - [SVG specification — painting](https://www.w3.org/TR/SVG11/painting.html)
 - [RegAsm docs](https://learn.microsoft.com/en-us/dotnet/framework/tools/regasm-exe-assembly-registration-tool)
+
+## Copyright
+
+(c)2026 Richard McQuiston.  All rights reserved.
