@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- `ImageTools.Core` — a shared `netstandard2.0` project that begins a batch
+  image resizer (first feature from `TODO.md`). Phase 1 lands the pure,
+  UI-agnostic pieces only: size math (`SizeSpec`/`Dimensions`), presets
+  (`SizePreset`), collision-safe output naming (`OutputNaming`), and the
+  worker job model (`ResizeJob`) — no `System.Drawing`, all unit-tested. The
+  actual pixel work will live in a separate worker process (Phase 2), never
+  in-process in Explorer.
+- `ImageTools.Core.Tests` — the repo's first unit-test project (xUnit, net8.0),
+  run in CI via `dotnet test`.
 - `installer/SVGToolsShell.iss` — an Inno Setup script that builds an
   uninstallable installer (Add/Remove Programs entry) as an alternative to the
   raw `install.bat`/`uninstall.bat` flow. Includes a code-signing hook and

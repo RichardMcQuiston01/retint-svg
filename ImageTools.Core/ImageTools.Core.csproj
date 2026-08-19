@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Shared, UI-agnostic raster-image logic for the image tools (Resizer first,
+    Converter later). Mirrors the SvgTools.Core discipline:
+
+      • netstandard2.0 so it can be referenced by the net48 shell handler, the
+        resize worker process, and any future .NET 8 handler.
+      • NO System.Drawing / WinForms dependency — this project holds only the
+        PURE, testable parts: size math, output naming, and the job model.
+        The actual pixel work (GDI+/System.Drawing) lives in the worker process,
+        never in-process inside Explorer.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>ImageTools.Core</AssemblyName>
+    <RootNamespace>ImageTools.Core</RootNamespace>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+</Project>
