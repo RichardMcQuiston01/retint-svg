@@ -16,8 +16,12 @@
     <ProjectReference Include="SvgTools.Core\SvgTools.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <!-- The root project globs *.cs recursively; the Core project owns the
-         files under SvgTools.Core\, so exclude that subtree from this build. -->
+    <!-- The root project globs *.cs recursively, so exclude every sibling
+         project's subtree — each owns (and compiles) its own sources.
+         Without this, the root net48 build tries to compile e.g. the xUnit
+         test files and fails with missing-type errors. -->
     <Compile Remove="SvgTools.Core\**\*.cs" />
+    <Compile Remove="ImageTools.Core\**\*.cs" />
+    <Compile Remove="ImageTools.Core.Tests\**\*.cs" />
   </ItemGroup>
 </Project>
