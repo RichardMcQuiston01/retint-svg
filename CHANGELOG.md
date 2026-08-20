@@ -11,7 +11,10 @@ All notable changes to this project will be documented in this file.
   (`SizePreset`), collision-safe output naming (`OutputNaming`), and the
   worker job model (`ResizeJob`) — no `System.Drawing`, all unit-tested. The
   actual pixel work will live in a separate worker process (Phase 2), never
-  in-process in Explorer.
+  in-process in Explorer. `OutputNaming` rejects tokens containing path
+  separators or invalid filename characters, and `SizeSpec` validates computed
+  dimensions are finite and within range before casting (guarding against
+  NaN/Infinity/overflow from extreme percentages).
 - `ImageTools.Core.Tests` — the repo's first unit-test project (xUnit, net8.0),
   run in CI via `dotnet test`.
 - `installer/SVGToolsShell.iss` — an Inno Setup script that builds an

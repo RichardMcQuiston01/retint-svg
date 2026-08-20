@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using ImageTools.Core;
@@ -66,6 +67,20 @@ namespace ImageTools.Core.Tests
             var result = OutputNaming.BuildOutputPath("Photo.gif", "25pct", _ => false);
 
             Assert.Equal("Photo_25pct.gif", Path.GetFileName(result));
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        [InlineData("50/pct")]   // forward slash
+        [InlineData("50\\pct")]  // backslash
+        public void InvalidToken_Throws(string? token)
+        {
+            var src = Path.Combine("pics", "Photo.jpg");
+
+            Assert.Throws<ArgumentException>(
+                () => OutputNaming.BuildOutputPath(src, token!, _ => false));
         }
     }
 }
