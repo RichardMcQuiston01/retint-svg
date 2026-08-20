@@ -92,8 +92,23 @@ namespace ImageTools.Core
         private static Dimensions Scale(int width, int height, double scale) =>
             new Dimensions(RoundDim(width * scale), RoundDim(height * scale));
 
-        private static int RoundDim(double value) =>
-            Math.Max(1, (int)Math.Round(value, MidpointRounding.AwayFromZero));
+        private static int RoundDim(double value)
+        {
+            // Validate the rounded value is finite and within Int32 range BEFORE
+            // casting: on netstandard2.0 running under .NET Framework, casting a
+            // NaN/Infinity/out-of-range double to int is unspecified. A huge or
+            // non-finite percentage would otherwise yield a garbage dimension.
+            var rounded = Math.Round(value, MidpointRounding.AwayFromZero);
+            if (double.IsNaN(rounded) || double.IsInfinity(rounded)
+                || rounded > int.MaxValue || rounded < int.MinValue)
+            {
+                throw new ArgumentOutOfRangeException(nameof(value),
+                    $"Computed dimension ({value}) is not a finite value within the supported range.");
+            }
+
+            var result = (int)rounded;
+            return result < 1 ? 1 : result; // clamp small/negative results up to 1px
+        }
 
         private static Dimensions ClampUpscale(Dimensions target, int sourceWidth, int sourceHeight, bool allowUpscale)
         {

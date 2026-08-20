@@ -103,6 +103,21 @@ namespace ImageTools.Core.Tests
                 () => SizeSpec.FromPercent(50).Compute(width, height));
         }
 
+        [Fact]
+        public void Compute_OverflowingDimension_Throws()
+        {
+            // 1e12 % of a 1,000,000 px edge => 1e16, far beyond Int32.
+            Assert.Throws<ArgumentOutOfRangeException>(
+                () => SizeSpec.FromPercent(1e12).Compute(1_000_000, 1_000_000));
+        }
+
+        [Fact]
+        public void Compute_NonFinitePercent_Throws()
+        {
+            Assert.Throws<ArgumentOutOfRangeException>(
+                () => SizeSpec.FromPercent(double.PositiveInfinity).Compute(100, 100));
+        }
+
         // ── Tokens ───────────────────────────────────────────────────────────
 
         [Fact]
