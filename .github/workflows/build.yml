@@ -1,8 +1,9 @@
 name: Build
 
-# Builds both projects on every PR and on pushes to main:
+# Builds the shippable projects on every PR and on pushes to main:
 #   • SvgTools.Core        (netstandard2.0, shared SVG logic)
 #   • SVGToolsShell        (net48, the SharpShell context-menu handler)
+#   • ImageTools.Core      (netstandard2.0, shared raster-image logic) + tests
 #
 # Runs on windows-latest because the shell handler targets .NET Framework 4.8,
 # whose reference assemblies ship with the Windows runner image. Building the
@@ -43,6 +44,12 @@ jobs:
 
       - name: Build SVGToolsShell (net48)
         run: dotnet build SVGToolsShell.csproj -c Release
+
+      - name: Build ImageTools.Core (netstandard2.0)
+        run: dotnet build ImageTools.Core/ImageTools.Core.csproj -c Release
+
+      - name: Test ImageTools.Core
+        run: dotnet test ImageTools.Core.Tests/ImageTools.Core.Tests.csproj -c Release
 
       - name: Upload build output
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
