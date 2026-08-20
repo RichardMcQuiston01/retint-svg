@@ -23,5 +23,6 @@
     <Compile Remove="SvgTools.Core\**\*.cs" />
     <Compile Remove="ImageTools.Core\**\*.cs" />
     <Compile Remove="ImageTools.Core.Tests\**\*.cs" />
+    <Compile Remove="ImageResizer.Worker\**\*.cs" />
   </ItemGroup>
 </Project>

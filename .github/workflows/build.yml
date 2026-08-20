@@ -4,6 +4,8 @@ name: Build
 #   • SvgTools.Core        (netstandard2.0, shared SVG logic)
 #   • SVGToolsShell        (net48, the SharpShell context-menu handler)
 #   • ImageTools.Core      (netstandard2.0, shared raster-image logic) + tests
+#   • ImageResizer.Worker  (net48, out-of-process resize worker — compile only;
+#                           its GDI+ pixel work needs a real Windows run to verify)
 #
 # Runs on windows-latest because the shell handler targets .NET Framework 4.8,
 # whose reference assemblies ship with the Windows runner image. Building the
@@ -50,6 +52,9 @@ jobs:
 
       - name: Test ImageTools.Core
         run: dotnet test ImageTools.Core.Tests/ImageTools.Core.Tests.csproj -c Release
+
+      - name: Build ImageResizer.Worker (net48)
+        run: dotnet build ImageResizer.Worker/ImageResizer.Worker.csproj -c Release
 
       - name: Upload build output
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

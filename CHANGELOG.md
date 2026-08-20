@@ -17,6 +17,14 @@ All notable changes to this project will be documented in this file.
   NaN/Infinity/overflow from extreme percentages).
 - `ImageTools.Core.Tests` — the repo's first unit-test project (xUnit, net8.0),
   run in CI via `dotnet test`.
+- `ImageResizer.Worker` — the out-of-process resize worker (Phase 2, net48
+  WinExe). Reads a `ResizeJob` from a temp JSON file and, per image, decodes →
+  applies EXIF orientation → resamples with `HighQualityBicubic` → encodes by
+  extension (JPEG honors the configured quality) → writes a non-destructive
+  sibling via an atomic `CreateNew`-and-retry. Keeps all GDI+ work out of
+  Explorer. EXIF orientation → transform mapping lives in `ImageTools.Core`
+  (`OrientationTransform`/`ExifOrientation`) and is unit-tested; the pixel path
+  is compiled in CI but needs a Windows run to verify.
 - `installer/SVGToolsShell.iss` — an Inno Setup script that builds an
   uninstallable installer (Add/Remove Programs entry) as an alternative to the
   raw `install.bat`/`uninstall.bat` flow. Includes a code-signing hook and
