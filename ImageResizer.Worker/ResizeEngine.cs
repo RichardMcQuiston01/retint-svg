@@ -113,12 +113,18 @@ namespace ImageResizer.Worker
 
             try
             {
-                using (var stream = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                using (var stream = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
                 {
+                    // A dot prefix does not hide files on Windows, so mark the temp
+                    // Hidden to keep it out of Explorer while encoding.
+                    TrySetHidden(temp, true);
                     // Format is chosen from the source extension (== output extension).
                     RasterEncoding.Save(image, stream, sourcePath, jpegQuality);
                 }
 
+                // The published file must be visible; clear Hidden before the move
+                // (File.Move preserves attributes onto the destination).
+                TrySetHidden(temp, false);
                 return PublishToUniqueSibling(temp, sourcePath, token);
             }
             catch
@@ -157,6 +163,20 @@ namespace ImageResizer.Worker
         private static void TryDelete(string path)
         {
             try { File.Delete(path); } catch { /* best-effort temp cleanup */ }
+        }
+
+        private static void TrySetHidden(string path, bool hidden)
+        {
+            // Best-effort: toggling the Hidden bit is cosmetic and must never fail
+            // a resize (e.g. a sharing quirk while the write handle is open).
+            try
+            {
+                var attrs = File.GetAttributes(path);
+                var updated = hidden ? (attrs | FileAttributes.Hidden) : (attrs & ~FileAttributes.Hidden);
+                if (updated != attrs)
+                    File.SetAttributes(path, updated);
+            }
+            catch { /* leave attributes as-is */ }
         }
     }
 }
