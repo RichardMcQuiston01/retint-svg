@@ -53,9 +53,10 @@ namespace ImageResizer.Worker
                     GraphicsUnit.Pixel, attributes);
             }
 
-            using var stream = CreateUniqueFile(sourcePath, job.Size.ToToken(), out var outputPath);
-            RasterEncoding.Save(resized, stream, outputPath, job.JpegQuality);
-            return outputPath;
+            // Encode to a temp sibling first, then publish it with an atomic move.
+            // A failure during encode or move never leaves a partial/empty final
+            // file, and other processes never observe an incomplete output.
+            return WriteAtomically(resized, sourcePath, job.Size.ToToken(), job.JpegQuality);
         }
 
         private static void ApplyExifOrientation(Image image)
@@ -99,22 +100,50 @@ namespace ImageResizer.Worker
         }
 
         /// <summary>
-        /// Atomically claims a unique output path: pick a name free per
-        /// <see cref="OutputNaming"/>, then open it with <c>CreateNew</c>; if
-        /// another writer won the race, advance to the next name and retry. This
-        /// is where the actual collision safety lives (the naming helper only
-        /// proposes candidates).
+        /// Encodes <paramref name="image"/> into a hidden temp file in the source
+        /// directory, then atomically moves it onto a collision-free sibling name.
+        /// The final file only ever appears complete; the temp file is removed on
+        /// any failure. The output extension (hence encoder) comes from the source.
         /// </summary>
-        private static FileStream CreateUniqueFile(string sourcePath, string token, out string outputPath)
+        private static string WriteAtomically(Image image, string sourcePath, string token, int jpegQuality)
+        {
+            var dir = Path.GetDirectoryName(sourcePath);
+            var tempDir = string.IsNullOrEmpty(dir) ? "." : dir!;
+            var temp = Path.Combine(tempDir, "." + Guid.NewGuid().ToString("N") + ".tmp");
+
+            try
+            {
+                using (var stream = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                {
+                    // Format is chosen from the source extension (== output extension).
+                    RasterEncoding.Save(image, stream, sourcePath, jpegQuality);
+                }
+
+                return PublishToUniqueSibling(temp, sourcePath, token);
+            }
+            catch
+            {
+                TryDelete(temp);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Moves <paramref name="temp"/> onto a name that is free per
+        /// <see cref="OutputNaming"/>; if another writer claimed it first,
+        /// <see cref="File.Move(string,string)"/> fails (it never overwrites) and
+        /// we advance to the next candidate. This is where the real collision
+        /// safety lives — the naming helper only proposes candidates.
+        /// </summary>
+        private static string PublishToUniqueSibling(string temp, string sourcePath, string token)
         {
             for (int attempt = 0; attempt < 1000; attempt++)
             {
                 var candidate = OutputNaming.BuildOutputPath(sourcePath, token, File.Exists);
                 try
                 {
-                    var stream = new FileStream(candidate, FileMode.CreateNew, FileAccess.Write, FileShare.None);
-                    outputPath = candidate;
-                    return stream;
+                    File.Move(temp, candidate);
+                    return candidate;
                 }
                 catch (IOException) when (File.Exists(candidate))
                 {
@@ -123,6 +152,11 @@ namespace ImageResizer.Worker
             }
 
             throw new IOException($"Could not create a unique output file for '{sourcePath}'.");
+        }
+
+        private static void TryDelete(string path)
+        {
+            try { File.Delete(path); } catch { /* best-effort temp cleanup */ }
         }
     }
 }

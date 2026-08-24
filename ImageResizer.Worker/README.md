@@ -6,7 +6,7 @@ this exe, so the heavy GDI+ decode/encode never runs inside `explorer.exe`.
 
 ## Contract
 
-```
+```text
 ImageResizer.Worker.exe <path-to-job.json>
 ```
 

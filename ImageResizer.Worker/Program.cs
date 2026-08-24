@@ -37,7 +37,9 @@ namespace ImageResizer.Worker
                 return 2;
             }
 
-            if (job is null || job.Files.Count == 0)
+            // System.Text.Json can set Files to null (an explicit "Files": null in
+            // the job) despite the initializer, so guard it before dereferencing.
+            if (job is null || job.Files is null || job.Files.Count == 0)
             {
                 ShowError("The resize job contained no files.");
                 TryDelete(jobPath);

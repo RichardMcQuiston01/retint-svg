@@ -20,9 +20,10 @@ All notable changes to this project will be documented in this file.
 - `ImageResizer.Worker` — the out-of-process resize worker (Phase 2, net48
   WinExe). Reads a `ResizeJob` from a temp JSON file and, per image, decodes →
   applies EXIF orientation → resamples with `HighQualityBicubic` → encodes by
-  extension (JPEG honors the configured quality) → writes a non-destructive
-  sibling via an atomic `CreateNew`-and-retry. Keeps all GDI+ work out of
-  Explorer. EXIF orientation → transform mapping lives in `ImageTools.Core`
+  extension (JPEG honors the configured quality) → publishes a non-destructive
+  sibling by encoding to a temp file and atomically moving it onto a
+  collision-free name (so a mid-write failure never leaves a partial output).
+  Keeps all GDI+ work out of Explorer. EXIF orientation → transform mapping lives in `ImageTools.Core`
   (`OrientationTransform`/`ExifOrientation`) and is unit-tested; the pixel path
   is compiled in CI but needs a Windows run to verify.
 - `installer/SVGToolsShell.iss` — an Inno Setup script that builds an
