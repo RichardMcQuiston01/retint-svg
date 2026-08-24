@@ -56,6 +56,12 @@ jobs:
       - name: Build ImageResizer.Worker (net48)
         run: dotnet build ImageResizer.Worker/ImageResizer.Worker.csproj -c Release
 
+      # Copy the worker beside the shell assembly so the artifact ships both in
+      # the sibling layout the handler (Phase 3) launches the worker from.
+      - name: Stage worker into the release output
+        shell: bash
+        run: cp -r ImageResizer.Worker/bin/Release/net48/. bin/Release/net48/
+
       - name: Upload build output
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
