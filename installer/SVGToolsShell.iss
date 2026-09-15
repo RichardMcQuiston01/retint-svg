@@ -26,7 +26,7 @@
 ; ============================================================================
 
 #define AppName        "SVG Tools Shell Extension"
-#define AppVersion      "0.1.0"
+#define AppVersion      "0.2.0"
 #define AppPublisher    "Richard McQuiston"
 #define AppId           "{{2ED7E239-89E8-4DAA-BB1D-40191EA65D70}"
 #define ComGuid         "{FC258F52-702A-4AC2-BA22-43F59C7DC682}"
