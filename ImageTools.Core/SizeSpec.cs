@@ -89,6 +89,65 @@ namespace ImageTools.Core
             }
         }
 
+        /// <summary>
+        /// Parses a short size token — "50%", "50pct", "1024px", or "640x480" —
+        /// into a <see cref="SizeSpec"/>. Whitespace is ignored and suffixes are
+        /// case-insensitive. Returns false (spec null) for anything unrecognized or
+        /// non-positive. The inverse of the human-friendly tokens the settings file
+        /// uses; the "%"/"pct" forms both map to <see cref="SizeKind.Percent"/>.
+        /// </summary>
+        public static bool TryParse(string? token, out SizeSpec? spec)
+        {
+            spec = null;
+            if (string.IsNullOrWhiteSpace(token)) return false;
+
+            var t = token!.Trim();
+
+            // Percent: "50%" or "50pct".
+            string? pctBody = null;
+            if (t.EndsWith("%", StringComparison.Ordinal))
+                pctBody = t.Substring(0, t.Length - 1);
+            else if (t.EndsWith("pct", StringComparison.OrdinalIgnoreCase))
+                pctBody = t.Substring(0, t.Length - 3);
+
+            if (pctBody != null)
+            {
+                if (double.TryParse(pctBody.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var pct)
+                    && pct > 0 && !double.IsInfinity(pct))
+                {
+                    spec = FromPercent(pct);
+                    return true;
+                }
+                return false;
+            }
+
+            // Longest edge: "1024px". Checked before the WxH split so the trailing
+            // 'x' in "px" isn't mistaken for a width/height separator.
+            if (t.EndsWith("px", StringComparison.OrdinalIgnoreCase))
+            {
+                var body = t.Substring(0, t.Length - 2).Trim();
+                if (int.TryParse(body, NumberStyles.Integer, CultureInfo.InvariantCulture, out var px) && px > 0)
+                {
+                    spec = FromLongestEdge(px);
+                    return true;
+                }
+                return false;
+            }
+
+            // Exact: "640x480" (uppercase X accepted too).
+            var parts = t.Split(new[] { 'x', 'X' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 2
+                && int.TryParse(parts[0].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var w)
+                && int.TryParse(parts[1].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var h)
+                && w > 0 && h > 0)
+            {
+                spec = FromExact(w, h);
+                return true;
+            }
+
+            return false;
+        }
+
         private static Dimensions Scale(int width, int height, double scale) =>
             new Dimensions(RoundDim(width * scale), RoundDim(height * scale));
 

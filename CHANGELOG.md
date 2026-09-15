@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Editable presets & settings** for the Resize Images menu, read from a plain
+  INI-style file at `%APPDATA%\SVGToolsShell\resizer-settings.ini`. A new
+  **Edit presets…** menu entry creates the file from a commented template on
+  first use and opens it in the default editor; the menu reflects your changes
+  on the next right-click, no reinstall needed. The file's `[presets]` section
+  lists `Label = size` lines (a percent like `50%`, a longest edge like
+  `1024px`, or an exact `640x480`), and `[settings]` controls `jpeg-quality`
+  (1–100) and `allow-upscale`. Parsing lives in `ImageTools.Core`
+  (`ResizerSettings` + `SizeSpec.TryParse`) and is fully unit-tested; it is
+  deliberately tolerant — a missing or malformed file, or bad preset lines, fall
+  back to the built-in defaults so the menu can never fail to build. JPEG quality
+  (previously hardcoded at 85) and the Custom dialog's upscale default now come
+  from these settings.
 - **Custom…** entry on the Resize Images menu — a small WinForms dialog
   (`CustomSizeDialog`) letting you pick any of the three size modes (a
   percentage, a longest-edge pixel count, or an exact width×height) plus whether

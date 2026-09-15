@@ -55,6 +55,11 @@ namespace SVGToolsShell
                 ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tif", ".tiff",
             };
 
+        // Presets + JPEG quality + upscale default, read from the user's config
+        // file each time the menu is built (so edits apply without reinstalling).
+        // Never null — a missing/unreadable file falls back to the defaults.
+        private ResizerSettings _settings = ResizerSettings.Defaults;
+
         [System.Diagnostics.Conditional("DEBUG")]
         private static void DebugLog(string message)
         {
@@ -79,6 +84,11 @@ namespace SVGToolsShell
         protected override ContextMenuStrip CreateMenu()
         {
             DebugLog("CreateMenu called");
+
+            // Reload each time so edits to the settings file take effect on the
+            // next right-click. Load() never throws — bad file => defaults.
+            _settings = ResizerSettings.Load(ResizerSettings.DefaultPath);
+
             var menu = new ContextMenuStrip();
 
             var resize = new ToolStripMenuItem("Resize Images")
@@ -87,11 +97,12 @@ namespace SVGToolsShell
                 ToolTipText = "Create resized copies alongside the originals",
             };
 
-            foreach (var preset in SizePreset.Defaults)
+            foreach (var preset in _settings.Presets)
                 resize.DropDownItems.Add(BuildPresetItem(preset));
 
             resize.DropDownItems.Add(new ToolStripSeparator());
             resize.DropDownItems.Add(BuildCustomItem());
+            resize.DropDownItems.Add(BuildEditPresetsItem());
 
             menu.Items.Add(resize);
             return menu;
@@ -100,8 +111,7 @@ namespace SVGToolsShell
         private ToolStripMenuItem BuildPresetItem(SizePreset preset)
         {
             var item = new ToolStripMenuItem(preset.Label);
-            // Presets keep the original upscale behavior (200% enlarges).
-            item.Click += (_, __) => RunResize(preset.Spec, allowUpscale: true);
+            item.Click += (_, __) => RunResize(preset.Spec, _settings.AllowUpscale);
             return item;
         }
 
@@ -113,11 +123,50 @@ namespace SVGToolsShell
             };
             item.Click += (_, __) =>
             {
-                using var dlg = new CustomSizeDialog();
+                using var dlg = new CustomSizeDialog(_settings.AllowUpscale);
                 if (dlg.ShowDialog() == DialogResult.OK)
                     RunResize(dlg.Spec, dlg.AllowUpscale);
             };
             return item;
+        }
+
+        private ToolStripMenuItem BuildEditPresetsItem()
+        {
+            var item = new ToolStripMenuItem("Edit presets…")
+            {
+                ToolTipText = "Open the settings file to add or change presets",
+            };
+            item.Click += (_, __) => EditPresets();
+            return item;
+        }
+
+        /// <summary>
+        /// Opens the settings file in the user's default editor, creating it from
+        /// a commented template on first use. Editing it changes the menu without
+        /// a reinstall.
+        /// </summary>
+        private static void EditPresets()
+        {
+            var path = ResizerSettings.DefaultPath;
+            try
+            {
+                if (!File.Exists(path))
+                {
+                    var dir = Path.GetDirectoryName(path);
+                    if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                    File.WriteAllText(path, ResizerSettings.DefaultFileTemplate());
+                }
+
+                // UseShellExecute=true so the file opens in whatever the user has
+                // associated with .ini (Notepad by default).
+                Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Could not open the settings file:\n{ex.Message}\n\n{path}",
+                    "Image Resizer", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         /// <summary>
@@ -153,7 +202,7 @@ namespace SVGToolsShell
             string jobPath;
             try
             {
-                jobPath = WriteJobFile(spec, files, allowUpscale);
+                jobPath = WriteJobFile(spec, files, allowUpscale, _settings.JpegQuality);
             }
             catch (Exception ex)
             {
@@ -198,7 +247,7 @@ namespace SVGToolsShell
         /// dependency; the shape and casing match what the worker deserializes
         /// (PascalCase properties, numeric enum for <see cref="SizeKind"/>).
         /// </summary>
-        private static string WriteJobFile(SizeSpec spec, IReadOnlyList<string> files, bool allowUpscale)
+        private static string WriteJobFile(SizeSpec spec, IReadOnlyList<string> files, bool allowUpscale, int jpegQuality)
         {
             var sb = new StringBuilder();
             sb.Append("{\"Size\":{");
@@ -209,7 +258,7 @@ namespace SVGToolsShell
             sb.Append("\"Width\":").Append(spec.Width).Append(',');
             sb.Append("\"Height\":").Append(spec.Height);
             sb.Append("},");
-            sb.Append("\"JpegQuality\":85,");
+            sb.Append("\"JpegQuality\":").Append(jpegQuality.ToString(CultureInfo.InvariantCulture)).Append(',');
             sb.Append("\"AllowUpscale\":").Append(allowUpscale ? "true" : "false").Append(',');
             sb.Append("\"OutputLocation\":\"sibling\",");
             sb.Append("\"Files\":[");
