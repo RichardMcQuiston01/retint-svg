@@ -37,7 +37,11 @@ swap.
 ## Verifying (Windows only)
 
 CI compiles this project but cannot exercise the pixel path (System.Drawing is
-Windows-only and there are no test images). To verify by hand on Windows:
+Windows-only and there are no test images). The `test/` folder has PowerShell
+scripts for this: `test/Run-ResizerTests.ps1` is a self-contained automated
+smoke test (generates its own images, asserts on the outputs), and
+`test/Resize-Image.ps1` runs the worker against your own files. To verify by
+hand on Windows:
 
 ```powershell
 dotnet build ImageResizer.Worker/ImageResizer.Worker.csproj -c Release
