@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- CI now builds the **Inno Setup installer**: a new `installer` job in the build
+  workflow compiles `installer/SVGToolsShell.iss` from the build output and
+  uploads `SVGToolsShell-Setup-<version>.exe` as an artifact; on a published
+  GitHub Release it also attaches that installer to the release. (Triggers on
+  `release: published` and gains `contents: write` only for that job.)
+
+### Fixed
+- The Inno installer's `[Files]` only bundled `*.dll`, so the produced installer
+  omitted `ImageResizer.Worker.exe` (and its `.config`) — the resizer would have
+  been non-functional after an installer-based install. It now bundles the
+  worker exe and app-config files alongside the DLLs.
+- The Inno script failed to compile: the `ComGuid`/`ImgGuid` defines wrote GUIDs
+  as registry data with a single leading `{`, which Inno parses as the start of
+  a constant (`Unknown constant "FC258F52-…"`). Doubled the leading brace to
+  `{{` (as `AppId` already did) so it renders back to `{…}`. Surfaced now that CI
+  actually compiles the installer.
+
+### Changed
+- README rewritten to document the image resizer — the **Resize Images** menu
+  (presets, **Custom…** dialog, editable `%APPDATA%` settings, folder
+  right-click) and the worker/EXIF/output-naming behavior — and to point at
+  `verify-registration.ps1`. Removed the References section (those links live in
+  `CLAUDE.md`).
+
 ## [0.2.0] - 2026-09-15
 
 ### Added

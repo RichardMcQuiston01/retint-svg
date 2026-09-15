@@ -1,18 +1,33 @@
 # SVGToolsShell
 
-A Windows Explorer shell extension that adds an **SVG Tools** context menu when you right-click any `.svg` file.
+Windows Explorer shell extensions that add two context menus: **SVG Tools** (Re-Tint) when you right-click an `.svg` file, and **Resize Images** when you right-click a raster image or a folder of images. Both write new files alongside the originals — nothing is ever overwritten.
 
 ## Features
+
+### SVG Tools (right-click a `.svg` file)
 
 - **Re-Tint Black to Color** — replace black fills/strokes with a chosen color
 - **Re-Tint White to Color** — replace white fills/strokes with a chosen color
 - **Flatten SVG Layers** — merge all `<path>` elements into a single layer with one fill color
 
-Each action offers a preset color palette (Black, White, Red, Green, Blue, Yellow, Orange, Purple, Gold, Silver) plus a **Custom…** option that opens the system color picker. Originals are never overwritten — output files are written alongside the source:
+Each action offers a preset color palette (Black, White, Red, Green, Blue, Yellow, Orange, Purple, Gold, Silver) plus a **Custom…** option that opens the system color picker.
+
+### Resize Images (right-click a `.png`, `.jpg`, `.jpeg`, `.bmp`, `.gif`, `.tif`, `.tiff`, or a folder)
+
+- **Presets** — 25 %, 50 %, 75 %, 200 %, and longest-edge 1024 px / 1920 px
+- **Custom…** — a dialog to enter a percentage, a longest-edge pixel count, or an exact width × height, with an option to allow enlarging
+- **Edit presets…** — the preset list, JPEG quality, and upscale default live in a user-editable settings file (see [Resizing Images](#resizing-images))
+- **Folders** — right-clicking a folder resizes its top-level images (shown only when the folder contains supported images)
+
+Originals are never overwritten — output files are written alongside the source:
 
 ```
-MyIcon.svg  →  MyIcon_tint_EFBF04.svg
-               MyIcon_flat.svg
+MyIcon.svg   →  MyIcon_tint_EFBF04.svg      (Re-Tint)
+                MyIcon_flat.svg             (Flatten)
+Photo.jpg    →  Photo_50pct.jpg            (50 % preset / Custom percent)
+                Photo_1024px.jpg           (longest-edge preset)
+                Photo_640x480.jpg          (Custom exact size)
+                Photo_50pct_2.jpg          (if the first already exists)
 ```
 
 ## Requirements
@@ -41,7 +56,9 @@ Run as Administrator from the project root:
 install.bat
 ```
 
-This registers the COM server via `RegAsm.exe /codebase`, writes the required shell extension registry entries, and restarts Explorer. The context menu will appear on `.svg` files after Explorer restarts.
+This registers the COM server via `RegAsm.exe /codebase`, writes the required shell extension registry entries (for `.svg`, the image extensions, and folders), and restarts Explorer. The menus appear after Explorer restarts. On Windows 11, click **Show more options** to see the classic menu where shell-extension entries live.
+
+To confirm everything registered correctly, run `verify-registration.ps1` (read-only, no admin needed) — it reports the COM class, approval, and file/folder associations for both handlers and flags anything missing.
 
 ## Uninstall
 
@@ -70,6 +87,37 @@ The following color forms are not yet handled:
 ## How Flatten Works
 
 Collects every `<path d="...">` in document order, joins the `d` data into a single path, and writes a minimal SVG with that one path and the chosen fill color. The original `width`, `height`, and `viewBox` are preserved. All path IDs, `transform` attributes, and clip paths are discarded.
+
+## Resizing Images
+
+Picking a size (a preset or a **Custom…** value) does **not** resize inside Explorer. The handler writes a small job file and launches a separate helper, `ImageResizer.Worker.exe`, which does the pixel work and shows a summary when it finishes. This keeps the heavy GDI+ decode/encode out of `explorer.exe`. The worker ships next to the DLL and is placed there automatically by the build (and by the release artifact).
+
+Each image is: decoded from a copy (so the source is never locked) → corrected for EXIF orientation (portrait phone photos come out upright) → resampled with high-quality bicubic scaling → re-encoded by its file extension (JPEG honors the configured quality) → written to a **non-destructive sibling** whose name reflects the size (`Photo_50pct.jpg`, `Photo_1024px.jpg`, `Photo_640x480.jpg`), with a `_2`, `_3`, … suffix if that name already exists.
+
+Supported inputs are what GDI+ handles natively: `.png`, `.jpg`, `.jpeg`, `.bmp`, `.gif`, `.tif`, `.tiff`. (WebP/HEIC/AVIF, animated-GIF frames, and metadata preservation are not covered yet.)
+
+### Editing presets and settings
+
+Choose **Resize Images → Edit presets…** to open the settings file, created from a commented template on first use at:
+
+```
+%APPDATA%\SVGToolsShell\resizer-settings.ini
+```
+
+Edits take effect on the next right-click — no reinstall needed. Example:
+
+```ini
+[settings]
+jpeg-quality  = 85       ; 1-100
+allow-upscale = true     ; may presets enlarge images smaller than the target?
+
+[presets]
+50%                  = 50%       ; a percentage
+Longest edge 1024 px = 1024px    ; longest edge, aspect preserved
+Web 800x600          = 800x600   ; exact width x height
+```
+
+A missing or malformed file (or an unparseable preset line) falls back to the built-in defaults, so the menu never fails to build.
 
 ## Extending
 
@@ -126,13 +174,6 @@ Then update `SvgContextMenu.cs`:
 ## Support
 
 If this library saved you some reverse-engineering, consider [buying me a coffee](https://donate.stripe.com/00w5kD3Gj1Xo9v7gVOcs800). ☕
-
-## References
-
-- [SharpShell GitHub](https://github.com/dwmkerr/sharpshell)
-- [SharpShell CodeProject article](https://www.codeproject.com/Articles/512956/NET-Shell-Extensions-Shell-Context-Menus)
-- [SVG specification — painting](https://www.w3.org/TR/SVG11/painting.html)
-- [RegAsm docs](https://learn.microsoft.com/en-us/dotnet/framework/tools/regasm-exe-assembly-registration-tool)
 
 ## Copyright
 
