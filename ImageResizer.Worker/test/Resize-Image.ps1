@@ -31,7 +31,9 @@ $exe = Get-ChildItem -Path $ReleaseDir -Recurse -Filter 'ImageResizer.Worker.exe
 if (-not $exe) { throw "ImageResizer.Worker.exe not found under '$ReleaseDir'." }
 Get-ChildItem -Path (Split-Path $exe.FullName) -Recurse -File | Unblock-File -ErrorAction SilentlyContinue
 
-$files = $Path | ForEach-Object { (Resolve-Path $_).Path }
+# [string[]] cast keeps a single path an array, so "Files" always serializes as
+# a JSON array (a bare string can't deserialize into the worker's List<string>).
+[string[]]$files = $Path | ForEach-Object { (Resolve-Path $_).Path }
 
 $size = switch ($PSCmdlet.ParameterSetName) {
     'Percent'     { @{ Kind = 0; Percent = $Percent } }
