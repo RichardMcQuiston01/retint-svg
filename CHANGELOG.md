@@ -4,7 +4,81 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-15
+
 ### Added
+- **Folder right-click** for the image resizer — the handler now carries a
+  `Directory` association, so right-clicking a folder shows **Resize Images** and
+  resizes the folder's top-level images (non-recursive). It appears only for
+  folders that actually contain supported images, so it doesn't clutter every
+  folder's menu. A folder and loose files can be selected together; duplicates
+  are de-duplicated. `install.bat`/`uninstall.bat`, the Inno installer, and
+  `verify-registration.ps1` register/verify the `HKCR\Directory` key for the
+  handler.
+- **Editable presets & settings** for the Resize Images menu, read from a plain
+  INI-style file at `%APPDATA%\SVGToolsShell\resizer-settings.ini`. A new
+  **Edit presets…** menu entry creates the file from a commented template on
+  first use and opens it in the default editor; the menu reflects your changes
+  on the next right-click, no reinstall needed. The file's `[presets]` section
+  lists `Label = size` lines (a percent like `50%`, a longest edge like
+  `1024px`, or an exact `640x480`), and `[settings]` controls `jpeg-quality`
+  (1–100) and `allow-upscale`. Parsing lives in `ImageTools.Core`
+  (`ResizerSettings` + `SizeSpec.TryParse`) and is fully unit-tested; it is
+  deliberately tolerant — a missing or malformed file, or bad preset lines, fall
+  back to the built-in defaults so the menu can never fail to build. JPEG quality
+  (previously hardcoded at 85) and the Custom dialog's upscale default now come
+  from these settings.
+- **Custom…** entry on the Resize Images menu — a small WinForms dialog
+  (`CustomSizeDialog`) letting you pick any of the three size modes (a
+  percentage, a longest-edge pixel count, or an exact width×height) plus whether
+  images smaller than the target may be enlarged. The chosen size runs through
+  the same worker-launch path as the presets, so outputs are still
+  non-destructive siblings. The handler's job writer now emits the caller's
+  `AllowUpscale` choice (presets keep the previous always-enlarge behavior).
+- `verify-registration.ps1` — a read-only health check that reports, for both
+  shell handlers, whether the COM class is registered (and its DLL present on
+  disk), the handler is on the shell Approved list, and every file-type
+  association points at the right GUID (the image handler also checks the worker
+  sits beside the DLL). Run it after `install.bat` to confirm the menus will
+  appear, or when one is missing to see exactly which piece is absent.
+- `install.bat` now guards against registering a stale build: after `RegAsm`,
+  it verifies both handlers' COM classes actually landed in
+  `HKCR\CLSID\{guid}\InprocServer32` and fails loudly if not, instead of writing
+  association keys that point at an unregistered CLSID (which makes the menu
+  silently never appear). It also warns when `ImageResizer.Worker.exe` isn't
+  staged next to the DLL.
+- `ImageContextMenu` — a new SharpShell context-menu handler (separate COM
+  server, own GUID) registered for `.png/.jpg/.jpeg/.bmp/.gif/.tif/.tiff`. Adds
+  a cascading **Resize Images** menu built from `SizePreset.Defaults`
+  (25/50/75/200 % and longest-edge 1024/1920 px — presets only in this first
+  slice). Picking a preset writes a `ResizeJob` to a temp JSON file (hand-
+  serialized so the in-Explorer handler carries no JSON dependency) and launches
+  `ImageResizer.Worker.exe`, so no pixel work runs inside `explorer.exe`. The
+  worker is staged beside the handler DLL by the build and located relative to
+  the assembly at runtime. `install.bat`/`uninstall.bat` and the Inno installer
+  register/unregister the image extensions for this handler. (Custom size
+  dialog, editable presets/settings, and folder right-click are deferred.)
+- `ImageTools.Core` — a shared `netstandard2.0` project that begins a batch
+  image resizer (first feature from `TODO.md`). Phase 1 lands the pure,
+  UI-agnostic pieces only: size math (`SizeSpec`/`Dimensions`), presets
+  (`SizePreset`), collision-safe output naming (`OutputNaming`), and the
+  worker job model (`ResizeJob`) — no `System.Drawing`, all unit-tested. The
+  actual pixel work will live in a separate worker process (Phase 2), never
+  in-process in Explorer. `OutputNaming` rejects tokens containing path
+  separators or invalid filename characters, and `SizeSpec` validates computed
+  dimensions are finite and within range before casting (guarding against
+  NaN/Infinity/overflow from extreme percentages).
+- `ImageTools.Core.Tests` — the repo's first unit-test project (xUnit, net8.0),
+  run in CI via `dotnet test`.
+- `ImageResizer.Worker` — the out-of-process resize worker (Phase 2, net48
+  WinExe). Reads a `ResizeJob` from a temp JSON file and, per image, decodes →
+  applies EXIF orientation → resamples with `HighQualityBicubic` → encodes by
+  extension (JPEG honors the configured quality) → publishes a non-destructive
+  sibling by encoding to a temp file and atomically moving it onto a
+  collision-free name (so a mid-write failure never leaves a partial output).
+  Keeps all GDI+ work out of Explorer. EXIF orientation → transform mapping lives in `ImageTools.Core`
+  (`OrientationTransform`/`ExifOrientation`) and is unit-tested; the pixel path
+  is compiled in CI but needs a Windows run to verify.
 - `installer/SVGToolsShell.iss` — an Inno Setup script that builds an
   uninstallable installer (Add/Remove Programs entry) as an alternative to the
   raw `install.bat`/`uninstall.bat` flow. Includes a code-signing hook and

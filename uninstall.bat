@@ -31,6 +31,14 @@ reg delete "HKCR\.svg\shellex\ContextMenuHandlers\SVGToolsShell" /f >nul 2>&1
 reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\.svg\ShellEx\ContextMenuHandlers\SVGToolsShell" /f >nul 2>&1
 reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved" /v "{FC258F52-702A-4AC2-BA22-43F59C7DC682}" /f >nul 2>&1
 
+:: Remove the image resizer handler entries
+for %%E in (.png .jpg .jpeg .bmp .gif .tif .tiff) do (
+    reg delete "HKCR\%%E\shellex\ContextMenuHandlers\SVGToolsImageResizer" /f >nul 2>&1
+    reg delete "HKLM\SOFTWARE\Classes\SystemFileAssociations\%%E\ShellEx\ContextMenuHandlers\SVGToolsImageResizer" /f >nul 2>&1
+)
+reg delete "HKCR\Directory\shellex\ContextMenuHandlers\SVGToolsImageResizer" /f >nul 2>&1
+reg delete "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved" /v "{25EF2E9B-582C-46C0-9FF2-EF10313F09D1}" /f >nul 2>&1
+
 echo.
 echo Restarting Windows Explorer...
 taskkill /f /im explorer.exe >nul 2>&1

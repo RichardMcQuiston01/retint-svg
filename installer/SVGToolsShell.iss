@@ -26,10 +26,11 @@
 ; ============================================================================
 
 #define AppName        "SVG Tools Shell Extension"
-#define AppVersion      "0.1.0"
+#define AppVersion      "0.2.0"
 #define AppPublisher    "Richard McQuiston"
 #define AppId           "{{2ED7E239-89E8-4DAA-BB1D-40191EA65D70}"
 #define ComGuid         "{FC258F52-702A-4AC2-BA22-43F59C7DC682}"
+#define ImgGuid         "{25EF2E9B-582C-46C0-9FF2-EF10313F09D1}"
 #define BuildDir        "..\bin\Release\net48"
 
 [Setup]
@@ -80,6 +81,28 @@ Root: HKLM; Subkey: "SOFTWARE\Classes\SystemFileAssociations\.svg\ShellEx\Contex
 ; --- Add to the approved shell-extensions list (required to load) ----------
 Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved"; \
     ValueType: string; ValueName: "{#ComGuid}"; ValueData: "SVGToolsShell"; \
+    Flags: uninsdeletevalue
+
+; --- Image resizer handler (separate COM server) --------------------------
+;     Hooked onto each supported raster extension the same two ways as the SVG
+;     handler, plus one Approved entry. Uses ISPP to loop the extension list.
+#define ImgExts "png,jpg,jpeg,bmp,gif,tif,tiff"
+#sub EmitImgExt
+  #define Ext Copy(ImgExts, 1, Pos(",", ImgExts + ",") - 1)
+  #expr ImgExts = Copy(ImgExts, Len(Ext) + 2)
+Root: HKCR; Subkey: ".{#Ext}\shellex\ContextMenuHandlers\SVGToolsImageResizer"; \
+    ValueType: string; ValueData: "{#ImgGuid}"; Flags: uninsdeletekey
+Root: HKLM; Subkey: "SOFTWARE\Classes\SystemFileAssociations\.{#Ext}\ShellEx\ContextMenuHandlers\SVGToolsImageResizer"; \
+    ValueType: string; ValueData: "{#ImgGuid}"; Flags: uninsdeletekey
+#endsub
+#for {0; ImgExts != ""; ""} EmitImgExt
+
+; Also hook folders (right-click a folder -> resize the images inside it).
+Root: HKCR; Subkey: "Directory\shellex\ContextMenuHandlers\SVGToolsImageResizer"; \
+    ValueType: string; ValueData: "{#ImgGuid}"; Flags: uninsdeletekey
+
+Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved"; \
+    ValueType: string; ValueName: "{#ImgGuid}"; ValueData: "SVGToolsImageResizer"; \
     Flags: uninsdeletevalue
 
 [Run]

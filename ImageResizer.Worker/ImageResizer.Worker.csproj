@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The out-of-process resize worker. The context-menu handler (Phase 3) writes
+    a ResizeJob to a temp JSON file and launches this exe with that path — so the
+    heavy GDI+ decode/encode never runs in-process inside explorer.exe.
+
+    net48 WinExe: matches the shell handler's runtime (ships alongside it, no
+    extra .NET runtime to install) and avoids a console window flashing when
+    launched. System.Drawing does the pixel work; MessageBox shows the summary.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>ImageResizer.Worker</AssemblyName>
+    <RootNamespace>ImageResizer.Worker</RootNamespace>
+    <PlatformTarget>x64</PlatformTarget>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <!-- System.Text.Json pulls transitive deps on net48; emit binding redirects
+         so they resolve at runtime. -->
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Framework assemblies aren't auto-referenced in SDK-style net48 projects. -->
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Shared pure logic: SizeSpec/Dimensions, OutputNaming, ResizeJob, EXIF. -->
+    <ProjectReference Include="..\ImageTools.Core\ImageTools.Core.csproj" />
+  </ItemGroup>
+
+</Project>
