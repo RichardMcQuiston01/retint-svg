@@ -1,8 +1,8 @@
 # ImageResizer.Worker
 
 The out-of-process resize worker (Phase 2 of the batch image resizer). The
-context-menu handler (Phase 3, not yet built) writes a job file and launches
-this exe, so the heavy GDI+ decode/encode never runs inside `explorer.exe`.
+`ImageContextMenu` handler (Phase 3) writes a job file and launches this exe, so
+the heavy GDI+ decode/encode never runs inside `explorer.exe`.
 
 ## Contract
 

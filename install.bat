@@ -76,6 +76,17 @@ if errorlevel 1 (
     exit /b 1
 )
 
+:: ── Image Resizer context menu (separate COM server) ─────────────────────
+:: A distinct handler (GUID below) associated with common raster image types.
+:: Registered the same three ways as the SVG handler, for each extension.
+set IMGGUID={25EF2E9B-582C-46C0-9FF2-EF10313F09D1}
+echo Registering image resizer context menu handler...
+for %%E in (.png .jpg .jpeg .bmp .gif .tif .tiff) do (
+    reg add "HKCR\%%E\shellex\ContextMenuHandlers\SVGToolsImageResizer" /ve /d "%IMGGUID%" /f >nul
+    reg add "HKLM\SOFTWARE\Classes\SystemFileAssociations\%%E\ShellEx\ContextMenuHandlers\SVGToolsImageResizer" /ve /d "%IMGGUID%" /f >nul
+)
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved" /v "%IMGGUID%" /d "SVGToolsImageResizer" /f >nul
+
 echo.
 echo Restarting Windows Explorer to apply the context menu...
 taskkill /f /im explorer.exe >nul 2>&1
@@ -83,5 +94,6 @@ timeout /t 1 /nobreak >nul
 start explorer.exe
 
 echo.
-echo Done. Right-click any .svg file to see "SVG Tools" in the context menu.
+echo Done. Right-click any .svg file to see "SVG Tools", or any image
+echo (.png/.jpg/.jpeg/.bmp/.gif/.tif/.tiff) to see "Resize Images".
 pause

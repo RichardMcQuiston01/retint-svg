@@ -14,7 +14,33 @@
   <ItemGroup>
     <!-- Shared, portable SVG logic (SvgProcessor + TintTarget). -->
     <ProjectReference Include="SvgTools.Core\SvgTools.Core.csproj" />
+    <!-- Shared, portable raster logic (SizePreset/SizeSpec/ResizeJob) used by
+         the image-resize context menu. -->
+    <ProjectReference Include="ImageTools.Core\ImageTools.Core.csproj" />
+    <!-- Build-order dependency only: the resize worker is a standalone exe that
+         must be built before this handler ships, but the handler must NOT link
+         against it (ReferenceOutputAssembly=false). The StageResizeWorker target
+         below copies the built worker beside this DLL so the handler can launch
+         it from its own directory at runtime. -->
+    <ProjectReference Include="ImageResizer.Worker\ImageResizer.Worker.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <Private>false</Private>
+    </ProjectReference>
   </ItemGroup>
+
+  <!-- Copy the worker's build output (exe + its System.Text.Json dependencies +
+       app.config binding redirects) next to SVGToolsShell.dll so the shipped
+       layout matches what the handler launches. Mirrors what the CI workflow
+       stages, but also works for a plain local `dotnet build`. -->
+  <Target Name="StageResizeWorker" AfterTargets="Build">
+    <ItemGroup>
+      <ResizeWorkerFiles Include="ImageResizer.Worker\bin\$(Configuration)\net48\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ResizeWorkerFiles)"
+          DestinationFiles="@(ResizeWorkerFiles->'$(OutDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true"
+          Condition="'@(ResizeWorkerFiles)' != ''" />
+  </Target>
   <ItemGroup>
     <!-- The root project globs *.cs recursively, so exclude every sibling
          project's subtree — each owns (and compiles) its own sources.
