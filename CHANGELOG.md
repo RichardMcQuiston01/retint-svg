@@ -16,6 +16,11 @@ All notable changes to this project will be documented in this file.
   omitted `ImageResizer.Worker.exe` (and its `.config`) — the resizer would have
   been non-functional after an installer-based install. It now bundles the
   worker exe and app-config files alongside the DLLs.
+- The Inno script failed to compile: the `ComGuid`/`ImgGuid` defines wrote GUIDs
+  as registry data with a single leading `{`, which Inno parses as the start of
+  a constant (`Unknown constant "FC258F52-…"`). Doubled the leading brace to
+  `{{` (as `AppId` already did) so it renders back to `{…}`. Surfaced now that CI
+  actually compiles the installer.
 
 ### Changed
 - README rewritten to document the image resizer — the **Resize Images** menu
