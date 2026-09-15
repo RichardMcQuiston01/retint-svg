@@ -47,6 +47,7 @@ $handlers = @(
         Name  = 'SVGToolsShell'
         Guid  = '{FC258F52-702A-4AC2-BA22-43F59C7DC682}'
         Exts  = @('.svg')
+        Folder = $false
         Worker = $null
     },
     [pscustomobject]@{
@@ -54,6 +55,7 @@ $handlers = @(
         Name  = 'SVGToolsImageResizer'
         Guid  = '{25EF2E9B-582C-46C0-9FF2-EF10313F09D1}'
         Exts  = @('.png', '.jpg', '.jpeg', '.bmp', '.gif', '.tif', '.tiff')
+        Folder = $true
         Worker = 'ImageResizer.Worker.exe'
     }
 )
@@ -98,6 +100,16 @@ foreach ($h in $handlers) {
         if (($hkcrVal -eq $h.Guid -or $sfaVal -eq $h.Guid) -and -not $clsidRegistered) {
             Write-Host "         ^ association points at an UNREGISTERED class — the menu will not appear." -ForegroundColor Yellow
             Write-Host "           The registered DLL is likely an old build. Re-register a current build." -ForegroundColor Yellow
+        }
+    }
+
+    # 3b) Folder association (image handler only): HKCR\Directory.
+    if ($h.Folder) {
+        $dir = "Registry::HKEY_CLASSES_ROOT\Directory\shellex\ContextMenuHandlers\$($h.Name)"
+        $dirVal = Get-RegValue $dir '(default)'
+        Report ($dirVal -eq $h.Guid) "Directory (folder right-click) association"
+        if (($dirVal -eq $h.Guid) -and -not $clsidRegistered) {
+            Write-Host "         ^ association points at an UNREGISTERED class — the menu will not appear." -ForegroundColor Yellow
         }
     }
 

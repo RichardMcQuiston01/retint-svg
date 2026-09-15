@@ -123,6 +123,8 @@ for %%E in (.png .jpg .jpeg .bmp .gif .tif .tiff) do (
     reg add "HKCR\%%E\shellex\ContextMenuHandlers\SVGToolsImageResizer" /ve /d "%IMGGUID%" /f >nul
     reg add "HKLM\SOFTWARE\Classes\SystemFileAssociations\%%E\ShellEx\ContextMenuHandlers\SVGToolsImageResizer" /ve /d "%IMGGUID%" /f >nul
 )
+:: Also hook folders (right-click a folder -> resize the images inside it).
+reg add "HKCR\Directory\shellex\ContextMenuHandlers\SVGToolsImageResizer" /ve /d "%IMGGUID%" /f >nul
 reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved" /v "%IMGGUID%" /d "SVGToolsImageResizer" /f >nul
 
 echo.
@@ -133,5 +135,6 @@ start explorer.exe
 
 echo.
 echo Done. Right-click any .svg file to see "SVG Tools", or any image
-echo (.png/.jpg/.jpeg/.bmp/.gif/.tif/.tiff) to see "Resize Images".
+echo (.png/.jpg/.jpeg/.bmp/.gif/.tif/.tiff) - or a folder of images - to
+echo see "Resize Images".
 pause
