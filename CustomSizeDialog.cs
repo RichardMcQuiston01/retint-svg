@@ -35,7 +35,11 @@ namespace SVGToolsShell
         /// <summary>Whether enlarging is permitted. Valid only when ShowDialog returned OK.</summary>
         public bool AllowUpscale { get; private set; } = true;
 
-        public CustomSizeDialog()
+        /// <param name="allowUpscaleDefault">
+        /// Initial state of the "allow enlarging" checkbox — taken from the user's
+        /// settings so the dialog matches the configured preset behavior.
+        /// </param>
+        public CustomSizeDialog(bool allowUpscaleDefault = true)
         {
             Text = "Resize Images — Custom size";
             FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -137,7 +141,7 @@ namespace SVGToolsShell
             _chkUpscale.Text = "Allow enlarging images smaller than the target";
             _chkUpscale.Location = new Point(16, 140);
             _chkUpscale.Size = new Size(352, 24);
-            _chkUpscale.Checked = true;
+            _chkUpscale.Checked = allowUpscaleDefault;
 
             // ── OK / Cancel ──────────────────────────────────────────────────
             var btnOk = new Button
