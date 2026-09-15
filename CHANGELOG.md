@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- `ImageContextMenu` — a new SharpShell context-menu handler (separate COM
+  server, own GUID) registered for `.png/.jpg/.jpeg/.bmp/.gif/.tif/.tiff`. Adds
+  a cascading **Resize Images** menu built from `SizePreset.Defaults`
+  (25/50/75/200 % and longest-edge 1024/1920 px — presets only in this first
+  slice). Picking a preset writes a `ResizeJob` to a temp JSON file (hand-
+  serialized so the in-Explorer handler carries no JSON dependency) and launches
+  `ImageResizer.Worker.exe`, so no pixel work runs inside `explorer.exe`. The
+  worker is staged beside the handler DLL by the build and located relative to
+  the assembly at runtime. `install.bat`/`uninstall.bat` and the Inno installer
+  register/unregister the image extensions for this handler. (Custom size
+  dialog, editable presets/settings, and folder right-click are deferred.)
 - `ImageTools.Core` — a shared `netstandard2.0` project that begins a batch
   image resizer (first feature from `TODO.md`). Phase 1 lands the pure,
   UI-agnostic pieces only: size math (`SizeSpec`/`Dimensions`), presets
