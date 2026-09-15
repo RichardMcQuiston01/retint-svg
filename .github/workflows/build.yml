@@ -12,12 +12,18 @@ name: Build
 # shell project also builds its SvgTools.Core project reference; Core is built
 # first on its own to confirm it still compiles independently (which is what
 # keeps it portable to the future .NET 8 IExplorerCommand handler).
+#
+# A second job (`installer`) compiles the Inno Setup installer from the build
+# output and uploads it as an artifact; on a published release it also attaches
+# the SVGToolsShell-Setup-<version>.exe to that release.
 
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  release:
+    types: [published]
 
 permissions:
   contents: read
@@ -68,3 +74,46 @@ jobs:
           name: SVGToolsShell-Release
           path: bin/Release/net48/
           if-no-files-found: error
+
+  # Compile the Inno Setup installer from the build output and publish it as an
+  # artifact. When the workflow runs for a *published release*, the finished
+  # SVGToolsShell-Setup-<version>.exe is also uploaded to that release as an
+  # asset. Inno Setup isn't on the .NET build path, so this is a separate job
+  # that reuses the `build` artifact rather than rebuilding.
+  installer:
+    needs: build
+    runs-on: windows-latest
+    permissions:
+      contents: write # required only to attach the installer to a release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Download build output
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: SVGToolsShell-Release
+          # The .iss references ..\bin\Release\net48 relative to installer/, so
+          # restore the artifact to that exact path.
+          path: bin/Release/net48
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Compile installer
+        run: '& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer\SVGToolsShell.iss'
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: SVGToolsShell-Installer
+          path: installer/Output/*.exe
+          if-no-files-found: error
+
+      - name: Attach installer to the release
+        if: github.event_name == 'release'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" installer/Output/*.exe --clobber

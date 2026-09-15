@@ -67,6 +67,11 @@ Name: "restartexplorer"; Description: "Restart Windows Explorer now so the menu 
 [Files]
 ; The extension DLL plus SharpShell and any other build dependencies.
 Source: "{#BuildDir}\*.dll"; DestDir: "{app}"; Flags: ignoreversion
+; The out-of-process resize worker (ImageResizer.Worker.exe) — the image-resize
+; handler launches it from beside the DLL, so it must be installed too.
+Source: "{#BuildDir}\*.exe"; DestDir: "{app}"; Flags: ignoreversion
+; App-config files carry the worker's binding redirects for System.Text.Json.
+Source: "{#BuildDir}\*.config"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 
 [Registry]
 ; --- Hook the handler onto the .svg ProgId (merged HKCR view) --------------

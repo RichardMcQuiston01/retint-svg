@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- CI now builds the **Inno Setup installer**: a new `installer` job in the build
+  workflow compiles `installer/SVGToolsShell.iss` from the build output and
+  uploads `SVGToolsShell-Setup-<version>.exe` as an artifact; on a published
+  GitHub Release it also attaches that installer to the release. (Triggers on
+  `release: published` and gains `contents: write` only for that job.)
+
+### Fixed
+- The Inno installer's `[Files]` only bundled `*.dll`, so the produced installer
+  omitted `ImageResizer.Worker.exe` (and its `.config`) — the resizer would have
+  been non-functional after an installer-based install. It now bundles the
+  worker exe and app-config files alongside the DLLs.
+
 ### Changed
 - README rewritten to document the image resizer — the **Resize Images** menu
   (presets, **Custom…** dialog, editable `%APPDATA%` settings, folder
