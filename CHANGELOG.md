@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-15
+
 ### Added
 - **Folder right-click** for the image resizer — the handler now carries a
   `Directory` association, so right-clicking a folder shows **Resize Images** and
