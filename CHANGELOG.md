@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- `verify-registration.ps1` — a read-only health check that reports, for both
+  shell handlers, whether the COM class is registered (and its DLL present on
+  disk), the handler is on the shell Approved list, and every file-type
+  association points at the right GUID (the image handler also checks the worker
+  sits beside the DLL). Run it after `install.bat` to confirm the menus will
+  appear, or when one is missing to see exactly which piece is absent.
+- `install.bat` now guards against registering a stale build: after `RegAsm`,
+  it verifies both handlers' COM classes actually landed in
+  `HKCR\CLSID\{guid}\InprocServer32` and fails loudly if not, instead of writing
+  association keys that point at an unregistered CLSID (which makes the menu
+  silently never appear). It also warns when `ImageResizer.Worker.exe` isn't
+  staged next to the DLL.
 - `ImageContextMenu` — a new SharpShell context-menu handler (separate COM
   server, own GUID) registered for `.png/.jpg/.jpeg/.bmp/.gif/.tif/.tiff`. Adds
   a cascading **Resize Images** menu built from `SizePreset.Defaults`
