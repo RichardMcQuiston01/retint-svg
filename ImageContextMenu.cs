@@ -16,8 +16,10 @@ namespace SVGToolsShell
 {
     /// <summary>
     /// Windows Explorer context menu shell extension for raster images
-    /// (.png/.jpg/.jpeg/.bmp/.gif/.tif/.tiff). Adds a cascading "Resize Images"
-    /// menu whose items are the built-in <see cref="SizePreset.Defaults"/>.
+    /// (.png/.jpg/.jpeg/.bmp/.gif/.tif/.tiff) and for folders that contain them
+    /// (Directory association) — right-clicking a folder resizes its top-level
+    /// images. Adds a cascading "Resize Images" menu whose items are the user's
+    /// configured presets (see <see cref="ResizerSettings"/>).
     ///
     /// This handler does no pixel work: picking a preset writes a
     /// <see cref="ResizeJob"/> to a temp JSON file and launches the separate
@@ -41,6 +43,7 @@ namespace SVGToolsShell
     [COMServerAssociation(AssociationType.ClassOfExtension, ".gif")]
     [COMServerAssociation(AssociationType.ClassOfExtension, ".tif")]
     [COMServerAssociation(AssociationType.ClassOfExtension, ".tiff")]
+    [COMServerAssociation(AssociationType.Directory)]
     public class ImageContextMenu : SharpContextMenu
     {
         private static readonly string LogPath =
@@ -78,7 +81,42 @@ namespace SVGToolsShell
         protected override bool CanShowMenu()
         {
             DebugLog("CanShowMenu called");
-            return true;
+            // Explorer queries this handler for image files (always show) and for
+            // any folder (Directory association) — for a folder, show only when it
+            // actually contains supported images, so we don't clutter every folder's
+            // menu. EnumerateFiles is lazy, so this stops at the first image.
+            foreach (var path in SelectedItemPaths)
+            {
+                if (Directory.Exists(path))
+                {
+                    if (FolderHasImage(path)) return true;
+                }
+                else if (SupportedExtensions.Contains(Path.GetExtension(path)))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>True if <paramref name="dir"/> holds at least one supported
+        /// image directly (non-recursive). Best-effort — an unreadable folder is
+        /// treated as empty.</summary>
+        private static bool FolderHasImage(string dir)
+        {
+            try
+            {
+                foreach (var file in Directory.EnumerateFiles(dir))
+                {
+                    if (SupportedExtensions.Contains(Path.GetExtension(file)))
+                        return true;
+                }
+            }
+            catch
+            {
+                // Access denied / gone — treat as no images.
+            }
+            return false;
         }
 
         protected override ContextMenuStrip CreateMenu()
@@ -94,7 +132,8 @@ namespace SVGToolsShell
             var resize = new ToolStripMenuItem("Resize Images")
             {
                 Image = CreateIcon(),
-                ToolTipText = "Create resized copies alongside the originals",
+                ToolTipText = "Create resized copies alongside the originals "
+                    + "(a folder resizes the images inside it)",
             };
 
             foreach (var preset in _settings.Presets)
@@ -174,17 +213,12 @@ namespace SVGToolsShell
         /// </summary>
         private void RunResize(SizeSpec spec, bool allowUpscale)
         {
-            var files = new List<string>();
-            foreach (var path in SelectedItemPaths)
-            {
-                if (SupportedExtensions.Contains(Path.GetExtension(path)))
-                    files.Add(path);
-            }
+            var files = CollectImageFiles();
 
             if (files.Count == 0)
             {
                 MessageBox.Show(
-                    "None of the selected files are supported image types.",
+                    "No supported images were found in the selection.",
                     "Image Resizer", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -230,6 +264,44 @@ namespace SVGToolsShell
                     $"Could not start the resize worker:\n{ex.Message}",
                     "Image Resizer", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        /// <summary>
+        /// Gathers the images to resize from the selection: image files directly,
+        /// and the top-level (non-recursive) supported images of any selected
+        /// folder. Duplicates are removed so a file selected alongside its folder
+        /// isn't resized twice.
+        /// </summary>
+        private List<string> CollectImageFiles()
+        {
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var files = new List<string>();
+
+            void Add(string file)
+            {
+                if (seen.Add(file)) files.Add(file);
+            }
+
+            foreach (var path in SelectedItemPaths)
+            {
+                if (Directory.Exists(path))
+                {
+                    string[] entries;
+                    try { entries = Directory.GetFiles(path); }
+                    catch { continue; } // access denied / gone — skip this folder
+                    foreach (var file in entries)
+                    {
+                        if (SupportedExtensions.Contains(Path.GetExtension(file)))
+                            Add(file);
+                    }
+                }
+                else if (SupportedExtensions.Contains(Path.GetExtension(path)))
+                {
+                    Add(path);
+                }
+            }
+
+            return files;
         }
 
         /// <summary>The worker exe next to this assembly, or null if missing.</summary>

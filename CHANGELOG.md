@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Folder right-click** for the image resizer — the handler now carries a
+  `Directory` association, so right-clicking a folder shows **Resize Images** and
+  resizes the folder's top-level images (non-recursive). It appears only for
+  folders that actually contain supported images, so it doesn't clutter every
+  folder's menu. A folder and loose files can be selected together; duplicates
+  are de-duplicated. `install.bat`/`uninstall.bat`, the Inno installer, and
+  `verify-registration.ps1` register/verify the `HKCR\Directory` key for the
+  handler.
 - **Editable presets & settings** for the Resize Images menu, read from a plain
   INI-style file at `%APPDATA%\SVGToolsShell\resizer-settings.ini`. A new
   **Edit presets…** menu entry creates the file from a commented template on

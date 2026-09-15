@@ -97,6 +97,10 @@ Root: HKLM; Subkey: "SOFTWARE\Classes\SystemFileAssociations\.{#Ext}\ShellEx\Con
 #endsub
 #for {0; ImgExts != ""; ""} EmitImgExt
 
+; Also hook folders (right-click a folder -> resize the images inside it).
+Root: HKCR; Subkey: "Directory\shellex\ContextMenuHandlers\SVGToolsImageResizer"; \
+    ValueType: string; ValueData: "{#ImgGuid}"; Flags: uninsdeletekey
+
 Root: HKLM; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved"; \
     ValueType: string; ValueName: "{#ImgGuid}"; ValueData: "SVGToolsImageResizer"; \
     Flags: uninsdeletevalue
