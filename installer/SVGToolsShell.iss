@@ -29,9 +29,9 @@
 #define AppVersion      "0.2.0"
 #define AppPublisher    "Richard McQuiston"
 #define AppId           "{{2ED7E239-89E8-4DAA-BB1D-40191EA65D70}"
-# GUIDs are written as registry data, where Inno would treat a leading "{" as
-# the start of a constant — so double it ("{{") exactly like AppId above. It
-# renders back to a single "{FC258F52-...}" in the registry.
+; GUIDs are written as registry data, where Inno would treat a leading "{" as
+; the start of a constant — so double it ("{{") exactly like AppId above. It
+; renders back to a single "{FC258F52-...}" in the registry.
 #define ComGuid         "{{FC258F52-702A-4AC2-BA22-43F59C7DC682}"
 #define ImgGuid         "{{25EF2E9B-582C-46C0-9FF2-EF10313F09D1}"
 #define BuildDir        "..\bin\Release\net48"
