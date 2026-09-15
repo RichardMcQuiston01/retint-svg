@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Custom…** entry on the Resize Images menu — a small WinForms dialog
+  (`CustomSizeDialog`) letting you pick any of the three size modes (a
+  percentage, a longest-edge pixel count, or an exact width×height) plus whether
+  images smaller than the target may be enlarged. The chosen size runs through
+  the same worker-launch path as the presets, so outputs are still
+  non-destructive siblings. The handler's job writer now emits the caller's
+  `AllowUpscale` choice (presets keep the previous always-enlarge behavior).
 - `verify-registration.ps1` — a read-only health check that reports, for both
   shell handlers, whether the COM class is registered (and its DLL present on
   disk), the handler is on the shell Approved list, and every file-type

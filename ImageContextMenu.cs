@@ -90,6 +90,9 @@ namespace SVGToolsShell
             foreach (var preset in SizePreset.Defaults)
                 resize.DropDownItems.Add(BuildPresetItem(preset));
 
+            resize.DropDownItems.Add(new ToolStripSeparator());
+            resize.DropDownItems.Add(BuildCustomItem());
+
             menu.Items.Add(resize);
             return menu;
         }
@@ -97,14 +100,30 @@ namespace SVGToolsShell
         private ToolStripMenuItem BuildPresetItem(SizePreset preset)
         {
             var item = new ToolStripMenuItem(preset.Label);
-            item.Click += (_, __) => RunResize(preset.Spec);
+            // Presets keep the original upscale behavior (200% enlarges).
+            item.Click += (_, __) => RunResize(preset.Spec, allowUpscale: true);
+            return item;
+        }
+
+        private ToolStripMenuItem BuildCustomItem()
+        {
+            var item = new ToolStripMenuItem("Custom…")
+            {
+                ToolTipText = "Choose a percentage, longest-edge, or exact size",
+            };
+            item.Click += (_, __) =>
+            {
+                using var dlg = new CustomSizeDialog();
+                if (dlg.ShowDialog() == DialogResult.OK)
+                    RunResize(dlg.Spec, dlg.AllowUpscale);
+            };
             return item;
         }
 
         /// <summary>
         /// Writes a job file for the selected images and hands it to the worker.
         /// </summary>
-        private void RunResize(SizeSpec spec)
+        private void RunResize(SizeSpec spec, bool allowUpscale)
         {
             var files = new List<string>();
             foreach (var path in SelectedItemPaths)
@@ -134,7 +153,7 @@ namespace SVGToolsShell
             string jobPath;
             try
             {
-                jobPath = WriteJobFile(spec, files);
+                jobPath = WriteJobFile(spec, files, allowUpscale);
             }
             catch (Exception ex)
             {
@@ -179,7 +198,7 @@ namespace SVGToolsShell
         /// dependency; the shape and casing match what the worker deserializes
         /// (PascalCase properties, numeric enum for <see cref="SizeKind"/>).
         /// </summary>
-        private static string WriteJobFile(SizeSpec spec, IReadOnlyList<string> files)
+        private static string WriteJobFile(SizeSpec spec, IReadOnlyList<string> files, bool allowUpscale)
         {
             var sb = new StringBuilder();
             sb.Append("{\"Size\":{");
@@ -191,7 +210,7 @@ namespace SVGToolsShell
             sb.Append("\"Height\":").Append(spec.Height);
             sb.Append("},");
             sb.Append("\"JpegQuality\":85,");
-            sb.Append("\"AllowUpscale\":true,");
+            sb.Append("\"AllowUpscale\":").Append(allowUpscale ? "true" : "false").Append(',');
             sb.Append("\"OutputLocation\":\"sibling\",");
             sb.Append("\"Files\":[");
             for (var i = 0; i < files.Count; i++)
