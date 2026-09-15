@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+- README rewritten to document the image resizer — the **Resize Images** menu
+  (presets, **Custom…** dialog, editable `%APPDATA%` settings, folder
+  right-click) and the worker/EXIF/output-naming behavior — and to point at
+  `verify-registration.ps1`. Removed the References section (those links live in
+  `CLAUDE.md`).
+
 ## [0.2.0] - 2026-09-15
 
 ### Added
