@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Convert to** submenu — PNG, JPG, TIFF, BMP, and **WebP**. Writes a
+  non-destructive sibling with the new extension (`Photo.png`; `Photo_2.png` if
+  taken or when the target extension matches the source, so the original is never
+  overwritten). Powered by **Magick.NET (ImageMagick)** in the worker, which
+  handles formats GDI+ can't (WebP); EXIF orientation is baked in. JPEG output
+  honors the configured quality.
 - **Rotate** submenu on the image handler — 90°, 180°, and 270° (clockwise).
   Each writes a non-destructive sibling (`Photo_rot90.jpg`, …) via the worker,
   baking in EXIF orientation first (and dropping the orientation tag so viewers
@@ -12,10 +18,14 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 - The image handler's actions are now grouped under a single top-level
-  **SVGToolsShell** parent menu (**SVGToolsShell ▸ Resize Images**, **▸ Rotate**)
-  instead of a top-level "Resize Images" item, keeping the context menu tidy as
-  more tools are added. The worker's `ResizeJob` gained an `Operation` field
-  (defaults to `"resize"`, so older job files still work) plus `RotateDegrees`.
+  **SVGToolsShell** parent menu (**SVGToolsShell ▸ Resize Images**, **▸ Rotate**,
+  **▸ Convert to**) instead of a top-level "Resize Images" item, keeping the
+  context menu tidy as more tools are added. The worker's `ResizeJob` gained an
+  `Operation` field (defaults to `"resize"`, so older job files still work) plus
+  `RotateDegrees` and `Format`.
+- The worker now depends on **Magick.NET-Q8-x64** (ImageMagick) for conversion;
+  it ships alongside the worker (installer bundles its DLLs). Resize and rotate
+  remain on GDI+.
 
 ## [0.2.1] - 2026-09-16
 

@@ -26,6 +26,9 @@ namespace ImageTools.Core
         /// <summary>Clockwise rotation in degrees (90/180/270) used when Operation is "rotate".</summary>
         public int RotateDegrees { get; set; }
 
+        /// <summary>Target extension (e.g. "png", "webp") used when Operation is "convert".</summary>
+        public string Format { get; set; } = "";
+
         /// <summary>JPEG encode quality (1–100) for lossy outputs.</summary>
         public int JpegQuality { get; set; } = 85;
 
