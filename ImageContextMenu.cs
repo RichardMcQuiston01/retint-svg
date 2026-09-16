@@ -159,6 +159,18 @@ namespace SVGToolsShell
             rotate.DropDownItems.Add(BuildRotateItem("270° clockwise", 270));
             parent.DropDownItems.Add(rotate);
 
+            // ── Convert to ▸ ──────────────────────────────────────────────────
+            var convert = new ToolStripMenuItem("Convert to")
+            {
+                ToolTipText = "Write a copy in another format alongside each image",
+            };
+            convert.DropDownItems.Add(BuildConvertItem("PNG", "png"));
+            convert.DropDownItems.Add(BuildConvertItem("JPG", "jpg"));
+            convert.DropDownItems.Add(BuildConvertItem("TIFF", "tif"));
+            convert.DropDownItems.Add(BuildConvertItem("BMP", "bmp"));
+            convert.DropDownItems.Add(BuildConvertItem("WebP", "webp"));
+            parent.DropDownItems.Add(convert);
+
             menu.Items.Add(parent);
             return menu;
         }
@@ -167,6 +179,13 @@ namespace SVGToolsShell
         {
             var item = new ToolStripMenuItem(label);
             item.Click += (_, __) => RunRotate(degrees);
+            return item;
+        }
+
+        private ToolStripMenuItem BuildConvertItem(string label, string extension)
+        {
+            var item = new ToolStripMenuItem(label);
+            item.Click += (_, __) => RunConvert(extension);
             return item;
         }
 
@@ -234,11 +253,14 @@ namespace SVGToolsShell
         private void RunRotate(int degrees)
             => LaunchJob("rotate", new SizeSpec(), rotateDegrees: degrees, allowUpscale: true);
 
+        private void RunConvert(string extension)
+            => LaunchJob("convert", new SizeSpec(), rotateDegrees: 0, allowUpscale: true, format: extension);
+
         /// <summary>
         /// Collects the selected images, writes a job file, and hands it to the
-        /// worker. Shared by every operation (resize, rotate, …).
+        /// worker. Shared by every operation (resize, rotate, convert, …).
         /// </summary>
-        private void LaunchJob(string operation, SizeSpec spec, int rotateDegrees, bool allowUpscale)
+        private void LaunchJob(string operation, SizeSpec spec, int rotateDegrees, bool allowUpscale, string format = "")
         {
             var files = CollectImageFiles();
 
@@ -263,7 +285,7 @@ namespace SVGToolsShell
             string jobPath;
             try
             {
-                jobPath = WriteJobFile(operation, spec, rotateDegrees, files, allowUpscale, _settings.JpegQuality);
+                jobPath = WriteJobFile(operation, spec, rotateDegrees, format, files, allowUpscale, _settings.JpegQuality);
             }
             catch (Exception ex)
             {
@@ -347,7 +369,7 @@ namespace SVGToolsShell
         /// (PascalCase properties, numeric enum for <see cref="SizeKind"/>).
         /// </summary>
         private static string WriteJobFile(
-            string operation, SizeSpec spec, int rotateDegrees,
+            string operation, SizeSpec spec, int rotateDegrees, string format,
             IReadOnlyList<string> files, bool allowUpscale, int jpegQuality)
         {
             var sb = new StringBuilder();
@@ -356,6 +378,9 @@ namespace SVGToolsShell
             AppendJsonString(sb, operation);
             sb.Append(',');
             sb.Append("\"RotateDegrees\":").Append(rotateDegrees.ToString(CultureInfo.InvariantCulture)).Append(',');
+            sb.Append("\"Format\":");
+            AppendJsonString(sb, format ?? "");
+            sb.Append(',');
             sb.Append("\"Size\":{");
             sb.Append("\"Kind\":").Append((int)spec.Kind).Append(',');
             sb.Append("\"Percent\":")

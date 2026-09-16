@@ -23,6 +23,8 @@ All image actions are grouped under a single **SVGToolsShell** parent menu:
 
 **Rotate ▸** — 90°, 180°, or 270° (clockwise); writes a rotated sibling (`Photo_rot90.jpg`).
 
+**Convert to ▸** — PNG, JPG, TIFF, BMP, or **WebP**; writes a copy with the new extension (`Photo.png`). Powered by ImageMagick (Magick.NET) in the worker.
+
 **Folders** — right-clicking a folder applies the action to its top-level images (the menu shows only when the folder contains supported images).
 
 Originals are never overwritten — output files are written alongside the source:
@@ -34,6 +36,7 @@ Photo.jpg    →  Photo_50pct.jpg            (50 % preset / Custom percent)
                 Photo_1024px.jpg           (longest-edge preset)
                 Photo_640x480.jpg          (Custom exact size)
                 Photo_rot90.jpg            (Rotate 90°)
+                Photo.png                  (Convert to PNG)
                 Photo_50pct_2.jpg          (if the first already exists)
 ```
 
