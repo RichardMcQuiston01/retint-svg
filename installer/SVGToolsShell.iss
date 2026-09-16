@@ -26,7 +26,7 @@
 ; ============================================================================
 
 #define AppName        "SVG Tools Shell Extension"
-#define AppVersion      "0.2.1"
+#define AppVersion      "0.3.0"
 #define AppPublisher    "Richard McQuiston"
 #define AppId           "{{2ED7E239-89E8-4DAA-BB1D-40191EA65D70}"
 ; GUIDs are written as registry data, where Inno would treat a leading "{" as
