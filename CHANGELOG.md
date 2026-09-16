@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Edit metadata…** — shown under the SVGToolsShell menu when a single
+  metadata-capable image (`.jpg`, `.jpeg`, `.tif`, `.tiff`, `.png`, `.webp`) is
+  selected. A dialog edits common **EXIF** (Artist, Copyright, Description, Date
+  taken) and **IPTC** (Title, Caption, Keywords, Creator, City, Country) fields,
+  prefilled from the file. Editing is **lossless and non-destructive**: the write
+  is done by a bundled **ExifTool**, which keeps a `<name>_original` backup of the
+  untouched file. The read (`-csv`) / write (`-Group:Tag=value`) command lines and
+  the field ⇄ tag mapping live in `ImageTools.Core` (`ExifToolCommand`, `Csv`) and
+  are unit-tested; the handler shells out to `exiftool.exe` directly (a separate
+  process, so no native code loads inside Explorer). ExifTool is fetched at build
+  time (`tools/fetch-exiftool.ps1`), not committed, and ships next to the handler.
 - **Power Rename…** — a PowerToys-style batch-rename dialog, shown under the
   SVGToolsShell menu only when two or more image files are selected. Search/
   replace (literal or **regex** with `$1` group substitutions), case-sensitivity,
