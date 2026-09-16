@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-16
+
+### Added
+- Installer options: the setup wizard now offers two opt-in checkboxes —
+  **"Configure image-resize presets now"** (seeds the settings file via the
+  worker's `--init-settings` mode, then opens it) and **"Open the donation page
+  after installation."** Both default to unchecked.
+- The installer now ships `verify-registration.ps1` into the install folder, so
+  the post-install health check is available without fetching it from the repo.
+- `ImageResizer.Worker.exe --init-settings` — a silent maintenance mode that
+  seeds `%APPDATA%\SVGToolsShell\resizer-settings.ini` from the canonical
+  template. `ResizerSettings.EnsureFileExists()` is the shared helper behind both
+  this and the handler's **Edit presets…** action (single source for the
+  template).
+
 ## [0.2.0] - 2026-09-15
 
 ### Added

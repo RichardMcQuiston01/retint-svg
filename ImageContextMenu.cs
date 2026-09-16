@@ -186,15 +186,12 @@ namespace SVGToolsShell
         /// </summary>
         private static void EditPresets()
         {
-            var path = ResizerSettings.DefaultPath;
+            string path;
             try
             {
-                if (!File.Exists(path))
-                {
-                    var dir = Path.GetDirectoryName(path);
-                    if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
-                    File.WriteAllText(path, ResizerSettings.DefaultFileTemplate());
-                }
+                // Seed the file from the template on first use (shared with the
+                // worker's --init-settings mode), then open it.
+                path = ResizerSettings.EnsureFileExists();
 
                 // UseShellExecute=true so the file opens in whatever the user has
                 // associated with .ini (Notepad by default).
@@ -203,7 +200,7 @@ namespace SVGToolsShell
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Could not open the settings file:\n{ex.Message}\n\n{path}",
+                    $"Could not open the settings file:\n{ex.Message}\n\n{ResizerSettings.DefaultPath}",
                     "Image Resizer", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
