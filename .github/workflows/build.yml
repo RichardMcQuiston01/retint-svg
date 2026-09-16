@@ -106,11 +106,64 @@ jobs:
           # restore the artifact to that exact path.
           path: bin/Release/net48
 
+      # Code signing (Azure Trusted Signing) is enabled only when the signing
+      # secrets are present AND this is a real release (or a manual dispatch, for
+      # testing). PRs and routine main pushes stay unsigned, so CI never depends
+      # on the secrets and forks aren't blocked. Secrets are referenced in `run`
+      # (masked) and mapped to an output so later steps can gate on them.
+      - name: Determine signing configuration
+        id: signing
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.AZURE_CLIENT_ID }}" ] \
+             && { [ "${{ github.event_name }}" = "release" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; }; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "Code signing: ENABLED"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Code signing: disabled (no signing secrets, or not a release/dispatch run)"
+          fi
+
+      # Sign our own build outputs BEFORE Inno bundles them, so the installed DLL
+      # (loaded into explorer.exe) and worker exe carry an Authenticode signature.
+      # Non-recursive dll,exe over the output root also re-signs the bundled
+      # third-party assemblies (harmless) but skips exiftool_files\.
+      - name: Sign build outputs (Azure Trusted Signing)
+        if: steps.signing.outputs.enabled == 'true'
+        uses: Azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82 # v2.0.0
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.TRUSTED_SIGNING_ENDPOINT }}
+          trusted-signing-account-name: ${{ secrets.TRUSTED_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.TRUSTED_SIGNING_PROFILE }}
+          files-folder: ${{ github.workspace }}\bin\Release\net48
+          files-folder-filter: dll,exe
+          files-folder-recurse: false
+          file-digest: SHA256
+
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y
 
       - name: Compile installer
         run: '& "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer\SVGToolsShell.iss'
+
+      # Sign the finished installer .exe (this is what SmartScreen judges).
+      - name: Sign installer (Azure Trusted Signing)
+        if: steps.signing.outputs.enabled == 'true'
+        uses: Azure/artifact-signing-action@c7ab2a863ab5f9a846ddb8265964877ef296ee82 # v2.0.0
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.TRUSTED_SIGNING_ENDPOINT }}
+          trusted-signing-account-name: ${{ secrets.TRUSTED_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.TRUSTED_SIGNING_PROFILE }}
+          files-folder: ${{ github.workspace }}\installer\Output
+          files-folder-filter: exe
+          files-folder-recurse: false
+          file-digest: SHA256
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
