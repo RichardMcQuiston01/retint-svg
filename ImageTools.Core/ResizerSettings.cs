@@ -46,6 +46,30 @@ namespace ImageTools.Core
                 "resizer-settings.ini");
 
         /// <summary>
+        /// Ensures the settings file at <see cref="DefaultPath"/> exists, seeding it
+        /// from <see cref="DefaultFileTemplate"/> if missing, and returns its path.
+        /// Used by both the handler's "Edit presets…" action and the worker's
+        /// <c>--init-settings</c> mode so the template has a single source.
+        /// </summary>
+        public static string EnsureFileExists() => EnsureFileExists(DefaultPath);
+
+        /// <summary>
+        /// Ensures the settings file at <paramref name="path"/> exists (seeding the
+        /// default template if missing) and returns it. An existing file is left
+        /// untouched.
+        /// </summary>
+        public static string EnsureFileExists(string path)
+        {
+            if (!File.Exists(path))
+            {
+                var dir = Path.GetDirectoryName(path);
+                if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                File.WriteAllText(path, DefaultFileTemplate());
+            }
+            return path;
+        }
+
+        /// <summary>
         /// Loads settings from <paramref name="path"/>, returning <see cref="Defaults"/>
         /// if the file is missing or cannot be read. Never throws.
         /// </summary>

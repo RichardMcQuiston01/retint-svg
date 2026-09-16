@@ -24,6 +24,14 @@ namespace ImageResizer.Worker
                 return 2;
             }
 
+            // Maintenance mode: seed the settings file (used by the installer's
+            // "Configure presets after install" option). Silent + no pixel work.
+            if (string.Equals(args[0], "--init-settings", StringComparison.OrdinalIgnoreCase))
+            {
+                try { ResizerSettings.EnsureFileExists(); } catch { /* best-effort */ }
+                return 0;
+            }
+
             var jobPath = args[0];
             ResizeJob? job;
             try
