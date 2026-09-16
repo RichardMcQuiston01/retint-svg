@@ -142,7 +142,7 @@ Right-click a single image (`.jpg`, `.jpeg`, `.tif`, `.tiff`, `.png`, or `.webp`
 
 Saving writes the changes with a bundled copy of [ExifTool](https://exiftool.org/), which edits the file in place **losslessly** (the image pixels are untouched) and keeps a backup of the original alongside it, named `<file>_original`. Clearing a field and saving removes that tag. If a field is left blank it is written as empty (i.e. cleared).
 
-ExifTool's ~6 MB Windows build is **not** committed to the repository — it is downloaded at build time by `tools/fetch-exiftool.ps1` (run automatically in CI) and shipped next to the handler by the installer. A plain local `dotnet build` does not fetch it; run the script yourself to test metadata editing locally:
+ExifTool's ~6 MB Windows build is **not** committed to the repository — it is installed at build time by `tools/fetch-exiftool.ps1` (run automatically in CI) and shipped next to the handler by the installer. The script installs ExifTool via [Chocolatey](https://chocolatey.org/) (`choco install exiftool`) and copies `exiftool.exe` (plus its `exiftool_files\` runtime, if present) into the build output. A plain local `dotnet build` does not run it; to test metadata editing locally, run the script yourself (Chocolatey required):
 
 ```powershell
 pwsh tools/fetch-exiftool.ps1 -Destination bin/Release/net48
