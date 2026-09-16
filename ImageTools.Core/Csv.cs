@@ -20,7 +20,10 @@ namespace ImageTools.Core
         public static IReadOnlyList<IReadOnlyList<string>> Parse(string? text)
         {
             var rows = new List<IReadOnlyList<string>>();
-            if (string.IsNullOrEmpty(text)) return rows;
+            // Explicit null check (not IsNullOrEmpty) so the compiler narrows `text`
+            // to non-null below — netstandard2.0's reference assemblies lack the
+            // [NotNullWhen] annotation that would otherwise carry the guarantee.
+            if (text is null || text.Length == 0) return rows;
 
             var row = new List<string>();
             var field = new StringBuilder();

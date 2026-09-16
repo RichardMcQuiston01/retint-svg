@@ -9,9 +9,12 @@
     is fetched at build time by this script (run by CI, or manually by a developer
     who wants to test metadata editing from a local `dotnet build`).
 
-    The version is resolved from exiftool.org/ver.txt (the current production
-    release) so the pin never goes stale as old versions are retired from the site.
-    Pass -Version to override, or edit $DefaultVersion below for the offline fallback.
+    The exact download is discovered by scraping the "Windows Executable" link
+    (exiftool-<ver>_64.zip) off exiftool.org's home page, so the URL always points
+    at a file the site currently offers — unlike constructing it from a version
+    number (exiftool.org/ver.txt reports the newest version overall, whose Windows
+    _64.zip is not always the one currently published). Pass -Version to pin an
+    explicit version instead; $DefaultVersion is the last-resort offline fallback.
 
     Nothing else in the build depends on this succeeding — if ExifTool is absent the
     menu item still appears but reports "exiftool.exe was not found" when used.
@@ -20,8 +23,8 @@
     The directory to stage exiftool.exe and exiftool_files\ into (created if needed).
 
 .PARAMETER Version
-    Optional explicit ExifTool version (e.g. "13.30"). Defaults to the current
-    production version from exiftool.org, falling back to $DefaultVersion.
+    Optional explicit ExifTool version (e.g. "13.30"). When omitted, the script
+    scrapes the current Windows build off exiftool.org, falling back to $DefaultVersion.
 
 .EXAMPLE
     pwsh tools/fetch-exiftool.ps1 -Destination bin/Release/net48
@@ -37,21 +40,35 @@ param(
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-# Offline fallback if exiftool.org/ver.txt can't be reached. Bump when it ages out.
+# Last-resort fallback if exiftool.org can't be scraped. Bump when it ages out.
 $DefaultVersion = '13.30'
 
-if (-not $Version) {
+$zipName = $null
+if ($Version) {
+    $zipName = "exiftool-${Version}_64.zip"
+}
+else {
+    # Discover the actual "Windows Executable" zip currently offered on the home
+    # page, e.g. <a href="exiftool-13.30_64.zip">Windows Executable</a>. This is
+    # the definitive filename — ver.txt can report a version whose _64.zip 404s.
     try {
-        $Version = (Invoke-RestMethod -Uri 'https://exiftool.org/ver.txt' -TimeoutSec 30).ToString().Trim()
-        Write-Host "Resolved current ExifTool production version: $Version"
+        $html = (Invoke-WebRequest -Uri 'https://exiftool.org/' -TimeoutSec 60 -UseBasicParsing).Content
+        $m = [regex]::Match($html, 'exiftool-[0-9]+(?:\.[0-9]+)+_64\.zip')
+        if ($m.Success) {
+            $zipName = $m.Value
+            Write-Host "Discovered current ExifTool Windows build: $zipName"
+        }
+        else {
+            Write-Warning "Could not find a _64.zip link on exiftool.org; using pinned $DefaultVersion."
+        }
     }
     catch {
-        $Version = $DefaultVersion
-        Write-Warning "Could not resolve current version from exiftool.org/ver.txt; using pinned $Version."
+        Write-Warning "Could not reach exiftool.org to discover the build; using pinned $DefaultVersion."
     }
+
+    if (-not $zipName) { $zipName = "exiftool-${DefaultVersion}_64.zip" }
 }
 
-$zipName = "exiftool-${Version}_64.zip"
 $url = "https://exiftool.org/$zipName"
 
 $work = Join-Path ([IO.Path]::GetTempPath()) ("exiftool-" + [Guid]::NewGuid().ToString('N'))
@@ -83,7 +100,7 @@ try {
     Copy-Item -Path $exe.FullName -Destination (Join-Path $destResolved 'exiftool.exe') -Force
     Copy-Item -Path $filesDir -Destination (Join-Path $destResolved 'exiftool_files') -Recurse -Force
 
-    Write-Host "Staged ExifTool $Version into $destResolved"
+    Write-Host "Staged $zipName into $destResolved"
 }
 finally {
     Remove-Item -Path $work -Recurse -Force -ErrorAction SilentlyContinue
