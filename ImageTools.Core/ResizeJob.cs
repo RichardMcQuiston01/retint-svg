@@ -13,8 +13,21 @@ namespace ImageTools.Core
     /// </summary>
     public sealed class ResizeJob
     {
-        /// <summary>The target size to apply to every file.</summary>
+        /// <summary>
+        /// The operation to perform on every file: "resize" (default) or "rotate".
+        /// Kept as a string so old job files (which omit it) still deserialize to
+        /// the resize behavior.
+        /// </summary>
+        public string Operation { get; set; } = "resize";
+
+        /// <summary>The target size to apply to every file (used when Operation is "resize").</summary>
         public SizeSpec Size { get; set; } = new SizeSpec();
+
+        /// <summary>Clockwise rotation in degrees (90/180/270) used when Operation is "rotate".</summary>
+        public int RotateDegrees { get; set; }
+
+        /// <summary>Target extension (e.g. "png", "webp") used when Operation is "convert".</summary>
+        public string Format { get; set; } = "";
 
         /// <summary>JPEG encode quality (1–100) for lossy outputs.</summary>
         public int JpegQuality { get; set; } = 85;

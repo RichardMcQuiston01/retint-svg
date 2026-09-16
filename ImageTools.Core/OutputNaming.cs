@@ -53,6 +53,51 @@ namespace ImageTools.Core
             return candidate;
         }
 
+        /// <summary>
+        /// Picks a non-destructive output path for a format conversion: the source
+        /// stem with a new extension, plus a counter to dodge names the caller
+        /// reports as taken (and to avoid overwriting the source when converting to
+        /// the same extension):
+        ///
+        ///   Photo.jpg  →  Photo.png
+        ///   Photo.png  →  Photo_2.png   (converting .png to png, or if Photo.png exists)
+        /// </summary>
+        public static string BuildConvertedPath(string sourcePath, string newExtension, Func<string, bool> exists)
+        {
+            if (string.IsNullOrEmpty(sourcePath))
+                throw new ArgumentException("Source path is required.", nameof(sourcePath));
+            if (exists is null)
+                throw new ArgumentNullException(nameof(exists));
+
+            var ext = (newExtension ?? string.Empty).TrimStart('.');
+            // The extension becomes part of a filename; keep it a bare, safe token.
+            if (ext.Length == 0
+                || ext.IndexOf('/') >= 0
+                || ext.IndexOf('\\') >= 0
+                || ext.IndexOf('.') >= 0
+                || ext.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+            {
+                throw new ArgumentException(
+                    "Extension must be a bare filename extension (letters/digits, no dot or separators).",
+                    nameof(newExtension));
+            }
+
+            var dir = Path.GetDirectoryName(sourcePath) ?? string.Empty;
+            var stem = Path.GetFileNameWithoutExtension(sourcePath);
+
+            var candidate = Combine(dir, $"{stem}.{ext}");
+            var counter = 2;
+            // Also skip the source itself so a same-extension conversion never
+            // targets (and clobbers) the original.
+            while (exists(candidate) || PathsEqual(candidate, sourcePath))
+                candidate = Combine(dir, $"{stem}_{counter++}.{ext}");
+
+            return candidate;
+        }
+
+        private static bool PathsEqual(string a, string b) =>
+            string.Equals(a, b, StringComparison.OrdinalIgnoreCase);
+
         private static string Combine(string dir, string fileName) =>
             dir.Length == 0 ? fileName : Path.Combine(dir, fileName);
     }

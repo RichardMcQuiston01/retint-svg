@@ -59,7 +59,7 @@ namespace ImageResizer.Worker
             return WriteAtomically(resized, sourcePath, job.Size.ToToken(), job.JpegQuality);
         }
 
-        private static void ApplyExifOrientation(Image image)
+        internal static void ApplyExifOrientation(Image image)
         {
             OrientationTransform transform;
             try
@@ -105,7 +105,7 @@ namespace ImageResizer.Worker
         /// The final file only ever appears complete; the temp file is removed on
         /// any failure. The output extension (hence encoder) comes from the source.
         /// </summary>
-        private static string WriteAtomically(Image image, string sourcePath, string token, int jpegQuality)
+        internal static string WriteAtomically(Image image, string sourcePath, string token, int jpegQuality)
         {
             var dir = Path.GetDirectoryName(sourcePath);
             var tempDir = string.IsNullOrEmpty(dir) ? "." : dir!;

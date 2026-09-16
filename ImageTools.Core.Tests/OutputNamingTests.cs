@@ -22,6 +22,53 @@ namespace ImageTools.Core.Tests
             Assert.Equal(Path.Combine("pics"), Path.GetDirectoryName(result));
         }
 
+        // ── BuildConvertedPath (format conversion) ─────────────────────────────
+
+        [Fact]
+        public void Converted_ChangesExtension_NoCounterWhenFree()
+        {
+            var src = Path.Combine("pics", "Photo.jpg");
+
+            var result = OutputNaming.BuildConvertedPath(src, "png", _ => false);
+
+            Assert.Equal("Photo.png", Path.GetFileName(result));
+            Assert.Equal(Path.Combine("pics"), Path.GetDirectoryName(result));
+        }
+
+        [Fact]
+        public void Converted_AcceptsLeadingDotAndCollides()
+        {
+            var src = Path.Combine("pics", "Photo.jpg");
+            var taken = new HashSet<string> { "Photo.png" };
+
+            var result = OutputNaming.BuildConvertedPath(
+                src, ".png", p => taken.Contains(Path.GetFileName(p)!));
+
+            Assert.Equal("Photo_2.png", Path.GetFileName(result));
+        }
+
+        [Fact]
+        public void Converted_NeverTargetsTheSource_WhenSameExtension()
+        {
+            // Converting Photo.png -> png must not overwrite the source itself,
+            // even if the existence check reports nothing taken.
+            var src = Path.Combine("pics", "Photo.png");
+
+            var result = OutputNaming.BuildConvertedPath(src, "png", _ => false);
+
+            Assert.Equal("Photo_2.png", Path.GetFileName(result));
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData("p/g")]
+        [InlineData("pn.g")]
+        public void Converted_RejectsBadExtensions(string ext)
+        {
+            var src = Path.Combine("pics", "Photo.jpg");
+            Assert.Throws<ArgumentException>(() => OutputNaming.BuildConvertedPath(src, ext, _ => false));
+        }
+
         [Fact]
         public void FirstCollision_AppendsCounter2()
         {

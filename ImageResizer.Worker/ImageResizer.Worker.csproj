@@ -32,6 +32,10 @@
 
   <ItemGroup>
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <!-- ImageMagick engine for format conversion (incl. WebP, which GDI+ can't
+         do) and, later, EXIF/IPTC. Q8-x64 matches the worker's x64 target and
+         bundles the native Magick.Native DLL into the output. -->
+    <PackageReference Include="Magick.NET-Q8-x64" Version="14.17.1" />
   </ItemGroup>
 
   <ItemGroup>

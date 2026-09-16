@@ -1,6 +1,6 @@
 # SVGToolsShell
 
-Windows Explorer shell extensions that add two context menus: **SVG Tools** (Re-Tint) when you right-click an `.svg` file, and **Resize Images** when you right-click a raster image or a folder of images. Both write new files alongside the originals — nothing is ever overwritten.
+Windows Explorer shell extensions that add two context menus: **SVG Tools** (Re-Tint) when you right-click an `.svg` file, and a **SVGToolsShell** menu when you right-click a raster image or a folder of images. Both write new files alongside the originals — nothing is ever overwritten.
 
 ## Features
 
@@ -12,12 +12,20 @@ Windows Explorer shell extensions that add two context menus: **SVG Tools** (Re-
 
 Each action offers a preset color palette (Black, White, Red, Green, Blue, Yellow, Orange, Purple, Gold, Silver) plus a **Custom…** option that opens the system color picker.
 
-### Resize Images (right-click a `.png`, `.jpg`, `.jpeg`, `.bmp`, `.gif`, `.tif`, `.tiff`, or a folder)
+### SVGToolsShell (right-click a `.png`, `.jpg`, `.jpeg`, `.bmp`, `.gif`, `.tif`, `.tiff`, or a folder)
 
+All image actions are grouped under a single **SVGToolsShell** parent menu:
+
+**Resize Images ▸**
 - **Presets** — 25 %, 50 %, 75 %, 200 %, and longest-edge 1024 px / 1920 px
 - **Custom…** — a dialog to enter a percentage, a longest-edge pixel count, or an exact width × height, with an option to allow enlarging
 - **Edit presets…** — the preset list, JPEG quality, and upscale default live in a user-editable settings file (see [Resizing Images](#resizing-images))
-- **Folders** — right-clicking a folder resizes its top-level images (shown only when the folder contains supported images)
+
+**Rotate ▸** — 90°, 180°, or 270° (clockwise); writes a rotated sibling (`Photo_rot90.jpg`).
+
+**Convert to ▸** — PNG, JPG, TIFF, BMP, or **WebP**; writes a copy with the new extension (`Photo.png`). Powered by ImageMagick (Magick.NET) in the worker.
+
+**Folders** — right-clicking a folder applies the action to its top-level images (the menu shows only when the folder contains supported images).
 
 Originals are never overwritten — output files are written alongside the source:
 
@@ -27,6 +35,8 @@ MyIcon.svg   →  MyIcon_tint_EFBF04.svg      (Re-Tint)
 Photo.jpg    →  Photo_50pct.jpg            (50 % preset / Custom percent)
                 Photo_1024px.jpg           (longest-edge preset)
                 Photo_640x480.jpg          (Custom exact size)
+                Photo_rot90.jpg            (Rotate 90°)
+                Photo.png                  (Convert to PNG)
                 Photo_50pct_2.jpg          (if the first already exists)
 ```
 
