@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-09-16
+
+### Added
+- **Code signing (Azure Trusted Signing)** — the CI `installer` job now signs the
+  build outputs (the shell-extension DLL and worker exe) before Inno bundles them
+  and signs the finished `SVGToolsShell-Setup-<version>.exe`, using the
+  `Azure/artifact-signing-action`. Signing runs only on a published release (or a
+  manual dispatch) and only when the signing secrets are configured, so PRs and
+  routine pushes remain unsigned and independent of the secrets. See README
+  "Code signing" for the required Azure setup and repository secrets.
+
 ## [0.3.0] - 2026-09-16
 
 ### Added
