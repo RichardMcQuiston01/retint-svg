@@ -15,13 +15,14 @@
 ;         iscc installer\SVGToolsShell.iss
 ;       The signed-ready installer is written to installer\Output\.
 ;
-;  Code signing (strongly recommended before public distribution — an unsigned
-;  shell extension triggers SmartScreen warnings and loads unsigned native code
-;  into explorer.exe):
-;    - Sign BOTH the DLL (before compiling this script) and the resulting
-;      installer .exe.
-;    - Uncomment and configure the SignTool directive below, then pass the tool
-;      definition to iscc, e.g.:
+;  Code signing:
+;    Release builds are signed by CI via Azure Trusted Signing — see the
+;    `installer` job in .github/workflows/build.yml, which signs the build
+;    outputs BEFORE this script bundles them and signs the finished installer
+;    afterwards. See README "Code signing" for the required repository secrets.
+;
+;    To sign a LOCAL build instead, uncomment and configure the SignTool
+;    directive below and pass the tool definition to iscc, e.g.:
 ;         iscc /Ssigntool="signtool.exe sign /fd sha256 /tr http://timestamp.digicert.com /td sha256 $f" installer\SVGToolsShell.iss
 ; ============================================================================
 

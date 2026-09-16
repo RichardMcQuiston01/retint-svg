@@ -15,11 +15,13 @@ for what has actually shipped.
 
 ## Planned / in progress
 
-### Code Signing
+### Code Signing — wired, pending Azure setup
 
-Sign the DLL and the installer (Azure Trusted Signing) so the shell extension and
-setup don't trigger SmartScreen warnings. Wire `signtool` into the CI installer
-job once the certificate/secrets are available.
+Azure Trusted Signing is wired into the CI `installer` job (signs the build
+outputs and the installer on release builds). It activates once the repository
+signing secrets are added; until then release installers ship unsigned. See
+README "Code signing" for the Azure account/profile/service-principal setup and
+the required secrets.
 
 ## Ideas (not started)
 

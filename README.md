@@ -202,6 +202,31 @@ Then update `SvgContextMenu.cs`:
 [Guid("YOUR-NEW-GUID-HERE")]
 ```
 
+## Code signing
+
+Release builds are signed with **[Azure Trusted Signing](https://learn.microsoft.com/en-us/azure/trusted-signing/)** in CI so the shell-extension DLL and the installer don't trip SmartScreen. The `installer` job in `.github/workflows/build.yml` signs the build outputs **before** Inno bundles them, then signs the finished `SVGToolsShell-Setup-<version>.exe`.
+
+Signing runs only on a **published GitHub Release** (or a manual `workflow_dispatch`) **and** only when the signing secrets are present — so PRs and routine pushes stay unsigned and never depend on the secrets.
+
+**One-time Azure setup:**
+1. Create a **Trusted Signing account** and a **certificate profile** (complete identity validation first). Note the account's region **endpoint** (e.g. `https://eus.codesigning.azure.net/`).
+2. Create a Microsoft Entra **app registration** (service principal) with a client secret, and grant it the **Trusted Signing Certificate Profile Signer** role on the account.
+
+**Repository secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+|--------|-------|
+| `AZURE_TENANT_ID` | Entra tenant ID |
+| `AZURE_CLIENT_ID` | App registration (client) ID |
+| `AZURE_CLIENT_SECRET` | App registration client secret |
+| `TRUSTED_SIGNING_ENDPOINT` | Account region endpoint, e.g. `https://eus.codesigning.azure.net/` |
+| `TRUSTED_SIGNING_ACCOUNT` | Trusted Signing account name |
+| `TRUSTED_SIGNING_PROFILE` | Certificate profile name |
+
+Once the secrets are set, publish a release (or run the workflow manually) and the attached installer will be signed. To verify, right-click the installer → **Properties → Digital Signatures**, or run `signtool verify /pa /v SVGToolsShell-Setup-<version>.exe`.
+
+> **Avoiding a long-lived secret (optional upgrade):** switch to **OIDC federated credentials** — add a federated credential on the app registration scoped to this repo, add `permissions: id-token: write` to the `installer` job and an `azure/login@v2` step before the signing steps, and drop `AZURE_CLIENT_SECRET` (the signing action then authenticates via the logged-in Azure CLI credential).
+
 ## Support
 
 If this library saved you some reverse-engineering, consider [buying me a coffee](https://donate.stripe.com/00w5kD3Gj1Xo9v7gVOcs800). ☕

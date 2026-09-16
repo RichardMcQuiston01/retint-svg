@@ -42,6 +42,7 @@ process**, never inside `explorer.exe` (see Architecture).
 | Unit tests                 | xUnit (net8.0), run on Linux in CI                   |
 | Registration               | `RegAsm.exe` + batch scripts                          |
 | Installer                  | [Inno Setup](https://jrsoftware.org/isinfo.php) (`installer/SVGToolsShell.iss`) |
+| Code signing               | [Azure Trusted Signing](https://learn.microsoft.com/en-us/azure/trusted-signing/) via `Azure/artifact-signing-action` in CI (release builds) |
 | CI                         | GitHub Actions (`.github/workflows/build.yml`)       |
 
 > **Why .NET Framework 4.8 (not .NET 8+)?**
@@ -251,7 +252,11 @@ published GitHub Release, attaches `SVGToolsShell-Setup-<version>.exe`.
    `AppVersion` in `installer/SVGToolsShell.iss`.
 3. Open a `dev → main` PR; merge once CI is green.
 4. Publish a GitHub Release tagged `vX.Y.Z` (manual — the tag push is a human
-   step). CI's `installer` job attaches the installer to the release.
+   step). CI's `installer` job signs the build outputs and the installer with
+   **Azure Trusted Signing** (when the signing secrets are configured), then
+   attaches the signed `SVGToolsShell-Setup-<version>.exe` to the release. See
+   README "Code signing" for the required secrets; signing is skipped (unsigned
+   installer) when they're absent.
 
 ---
 
