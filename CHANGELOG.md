@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Code signing (Azure Trusted Signing)** — the CI `installer` job now signs the
+  build outputs (the shell-extension DLL and worker exe) before Inno bundles them
+  and signs the finished `SVGToolsShell-Setup-<version>.exe`, using the
+  `Azure/artifact-signing-action`. Signing runs only on a published release (or a
+  manual dispatch) and only when the signing secrets are configured, so PRs and
+  routine pushes remain unsigned and independent of the secrets. See README
+  "Code signing" for the required Azure setup and repository secrets.
 - **Edit metadata…** — shown under the SVGToolsShell menu when a single
   metadata-capable image (`.jpg`, `.jpeg`, `.tif`, `.tiff`, `.png`, `.webp`) is
   selected. A dialog edits common **EXIF** (Artist, Copyright, Description, Date
