@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 ### Added
+- **Power Rename…** — a PowerToys-style batch-rename dialog, shown under the
+  SVGToolsShell menu only when two or more image files are selected. Search/
+  replace (literal or **regex** with `$1` group substitutions), case-sensitivity,
+  all-vs-first occurrence, apply-to scope (name / extension / whole filename),
+  and a `${n}` counter (with start + zero-padding). A live preview shows
+  Original → New name and flags conflicts (duplicate targets or names already on
+  disk), which are skipped; renames use `File.Move` so nothing is overwritten.
+  The matching logic lives in `ImageTools.Core` (`RenameEngine`/`RenameOptions`)
+  and is unit-tested.
 - **Convert to** submenu — PNG, JPG, TIFF, BMP, and **WebP**. Writes a
   non-destructive sibling with the new extension (`Photo.png`; `Photo_2.png` if
   taken or when the target extension matches the source, so the original is never

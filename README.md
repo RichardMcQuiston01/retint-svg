@@ -25,7 +25,9 @@ All image actions are grouped under a single **SVGToolsShell** parent menu:
 
 **Convert to ▸** — PNG, JPG, TIFF, BMP, or **WebP**; writes a copy with the new extension (`Photo.png`). Powered by ImageMagick (Magick.NET) in the worker.
 
-**Folders** — right-clicking a folder applies the action to its top-level images (the menu shows only when the folder contains supported images).
+**Power Rename…** (shown when two or more images are selected) — a PowerToys-style batch rename: literal or **regex** search/replace (with `$1` groups), case and occurrence options, apply-to scope (name / extension / whole filename), and a `${n}` counter. A live preview shows Original → New name and flags conflicts, which are skipped; renames never overwrite.
+
+**Folders** — right-clicking a folder applies the resize/rotate/convert actions to its top-level images (the menu shows only when the folder contains supported images).
 
 Originals are never overwritten — output files are written alongside the source:
 
