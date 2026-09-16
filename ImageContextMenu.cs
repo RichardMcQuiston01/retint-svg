@@ -171,8 +171,37 @@ namespace SVGToolsShell
             convert.DropDownItems.Add(BuildConvertItem("WebP", "webp"));
             parent.DropDownItems.Add(convert);
 
+            // ── Power Rename ▸ (only for a multi-file image selection) ─────────
+            var selectedImages = SelectedImageFiles();
+            if (selectedImages.Count >= 2)
+            {
+                parent.DropDownItems.Add(new ToolStripSeparator());
+                var powerRename = new ToolStripMenuItem($"Power Rename… ({selectedImages.Count} files)")
+                {
+                    ToolTipText = "Batch rename the selected images (search/replace, regex, counter)",
+                };
+                powerRename.Click += (_, __) =>
+                {
+                    using var dlg = new PowerRenameDialog(selectedImages);
+                    dlg.ShowDialog();
+                };
+                parent.DropDownItems.Add(powerRename);
+            }
+
             menu.Items.Add(parent);
             return menu;
+        }
+
+        /// <summary>The directly-selected supported image files (no folder expansion).</summary>
+        private List<string> SelectedImageFiles()
+        {
+            var files = new List<string>();
+            foreach (var path in SelectedItemPaths)
+            {
+                if (!Directory.Exists(path) && SupportedExtensions.Contains(Path.GetExtension(path)))
+                    files.Add(path);
+            }
+            return files;
         }
 
         private ToolStripMenuItem BuildRotateItem(string label, int degrees)
