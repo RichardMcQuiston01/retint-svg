@@ -1,3 +1,4 @@
+using System.IO;
 using System.Linq;
 using ImageTools.Core;
 using Xunit;
@@ -6,6 +7,33 @@ namespace ImageTools.Core.Tests
 {
     public class ResizerSettingsTests
     {
+        [Fact]
+        public void EnsureFileExists_CreatesTemplateWhenMissing_AndPreservesExisting()
+        {
+            var dir = Path.Combine(Path.GetTempPath(), "svgtools-test-" + Path.GetRandomFileName());
+            var path = Path.Combine(dir, "resizer-settings.ini");
+            try
+            {
+                // Missing → seeded from the default template (parses to defaults).
+                var returned = ResizerSettings.EnsureFileExists(path);
+                Assert.Equal(path, returned);
+                Assert.True(File.Exists(path));
+                var seeded = ResizerSettings.Parse(File.ReadAllText(path));
+                Assert.Equal(SizePreset.Defaults.Count, seeded.Presets.Count);
+
+                // Existing → left untouched.
+                File.WriteAllText(path, "[presets]\nOnly = 10%\n");
+                ResizerSettings.EnsureFileExists(path);
+                var kept = ResizerSettings.Parse(File.ReadAllText(path));
+                Assert.Single(kept.Presets);
+                Assert.Equal("Only", kept.Presets[0].Label);
+            }
+            finally
+            {
+                try { Directory.Delete(dir, recursive: true); } catch { /* best-effort */ }
+            }
+        }
+
         [Fact]
         public void Parse_ReadsSettingsAndPresets()
         {

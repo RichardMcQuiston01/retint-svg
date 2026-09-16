@@ -35,6 +35,7 @@
 #define ComGuid         "{{FC258F52-702A-4AC2-BA22-43F59C7DC682}"
 #define ImgGuid         "{{25EF2E9B-582C-46C0-9FF2-EF10313F09D1}"
 #define BuildDir        "..\bin\Release\net48"
+#define DonateUrl       "https://donate.stripe.com/00w5kD3Gj1Xo9v7gVOcs800"
 
 [Setup]
 AppId={#AppId}
@@ -66,6 +67,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "restartexplorer"; Description: "Restart Windows Explorer now so the menu appears immediately"; GroupDescription: "Finish setup:"
+Name: "configpresets"; Description: "Configure image-resize presets now (opens the settings file)"; GroupDescription: "Optional:"; Flags: unchecked
+Name: "opendonate"; Description: "Open the donation page after installation"; GroupDescription: "Optional:"; Flags: unchecked
 
 [Files]
 ; The extension DLL plus SharpShell and any other build dependencies.
@@ -75,6 +78,8 @@ Source: "{#BuildDir}\*.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#BuildDir}\*.exe"; DestDir: "{app}"; Flags: ignoreversion
 ; App-config files carry the worker's binding redirects for System.Text.Json.
 Source: "{#BuildDir}\*.config"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
+; Read-only post-install health check for the registered handlers.
+Source: "..\verify-registration.ps1"; DestDir: "{app}"; Flags: ignoreversion
 
 [Registry]
 ; --- Hook the handler onto the .svg ProgId (merged HKCR view) --------------
@@ -122,6 +127,18 @@ Filename: "{win}\Microsoft.NET\Framework64\v4.0.30319\RegAsm.exe"; \
 ; Restart Explorer so the new context menu is picked up immediately (opt-in).
 Filename: "{cmd}"; Parameters: "/c taskkill /f /im explorer.exe & start explorer.exe"; \
     Tasks: restartexplorer; Flags: runhidden
+
+; Configure presets (opt-in): seed the settings file via the worker's canonical
+; template, then open it in the user's default editor.
+Filename: "{app}\ImageResizer.Worker.exe"; Parameters: "--init-settings"; \
+    StatusMsg: "Preparing the presets file..."; Tasks: configpresets; Flags: runhidden skipifsilent
+Filename: "{userappdata}\SVGToolsShell\resizer-settings.ini"; \
+    Description: "Open the image-resize presets file"; \
+    Tasks: configpresets; Flags: shellexec nowait skipifsilent
+
+; Open the donation page (opt-in).
+Filename: "{#DonateUrl}"; Description: "Open the donation page"; \
+    Tasks: opendonate; Flags: shellexec nowait skipifsilent
 
 [UninstallRun]
 ; Unregister the COM server. Runs before files are removed.
