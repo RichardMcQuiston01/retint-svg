@@ -58,6 +58,15 @@ namespace SVGToolsShell
                 ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tif", ".tiff",
             };
 
+        // Formats with meaningful EXIF/IPTC support (a subset of the above) — the
+        // "Edit metadata…" item is offered only for these. .bmp/.gif carry no EXIF
+        // or IPTC, so editing them would be pointless.
+        private static readonly HashSet<string> MetadataExtensions =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ".jpg", ".jpeg", ".tif", ".tiff", ".png", ".webp",
+            };
+
         // Presets + JPEG quality + upscale default, read from the user's config
         // file each time the menu is built (so edits apply without reinstalling).
         // Never null — a missing/unreadable file falls back to the defaults.
@@ -129,22 +138,107 @@ namespace SVGToolsShell
 
             var menu = new ContextMenuStrip();
 
-            var resize = new ToolStripMenuItem("Resize Images")
+            // All image actions live under one top-level parent so the context
+            // menu stays tidy as more tools are added.
+            var parent = new ToolStripMenuItem("SVGToolsShell")
             {
                 Image = CreateIcon(),
+            };
+
+            // ── Resize Images ▸ ───────────────────────────────────────────────
+            var resize = new ToolStripMenuItem("Resize Images")
+            {
                 ToolTipText = "Create resized copies alongside the originals "
                     + "(a folder resizes the images inside it)",
             };
-
             foreach (var preset in _settings.Presets)
                 resize.DropDownItems.Add(BuildPresetItem(preset));
-
             resize.DropDownItems.Add(new ToolStripSeparator());
             resize.DropDownItems.Add(BuildCustomItem());
             resize.DropDownItems.Add(BuildEditPresetsItem());
+            parent.DropDownItems.Add(resize);
 
-            menu.Items.Add(resize);
+            // ── Rotate ▸ ──────────────────────────────────────────────────────
+            var rotate = new ToolStripMenuItem("Rotate")
+            {
+                ToolTipText = "Write a rotated copy alongside each image",
+            };
+            rotate.DropDownItems.Add(BuildRotateItem("90° clockwise", 90));
+            rotate.DropDownItems.Add(BuildRotateItem("180°", 180));
+            rotate.DropDownItems.Add(BuildRotateItem("270° clockwise", 270));
+            parent.DropDownItems.Add(rotate);
+
+            // ── Convert to ▸ ──────────────────────────────────────────────────
+            var convert = new ToolStripMenuItem("Convert to")
+            {
+                ToolTipText = "Write a copy in another format alongside each image",
+            };
+            convert.DropDownItems.Add(BuildConvertItem("PNG", "png"));
+            convert.DropDownItems.Add(BuildConvertItem("JPG", "jpg"));
+            convert.DropDownItems.Add(BuildConvertItem("TIFF", "tif"));
+            convert.DropDownItems.Add(BuildConvertItem("BMP", "bmp"));
+            convert.DropDownItems.Add(BuildConvertItem("WebP", "webp"));
+            parent.DropDownItems.Add(convert);
+
+            var selectedImages = SelectedImageFiles();
+
+            // ── Edit metadata… (only for a single, metadata-capable image) ─────
+            if (selectedImages.Count == 1
+                && MetadataExtensions.Contains(Path.GetExtension(selectedImages[0])))
+            {
+                var editMeta = new ToolStripMenuItem("Edit metadata…")
+                {
+                    ToolTipText = "View and edit EXIF/IPTC fields (keeps an *_original backup)",
+                };
+                var metaFile = selectedImages[0];
+                editMeta.Click += (_, __) => RunEditMetadata(metaFile);
+                parent.DropDownItems.Add(editMeta);
+            }
+
+            // ── Power Rename ▸ (only for a multi-file image selection) ─────────
+            if (selectedImages.Count >= 2)
+            {
+                parent.DropDownItems.Add(new ToolStripSeparator());
+                var powerRename = new ToolStripMenuItem($"Power Rename… ({selectedImages.Count} files)")
+                {
+                    ToolTipText = "Batch rename the selected images (search/replace, regex, counter)",
+                };
+                powerRename.Click += (_, __) =>
+                {
+                    using var dlg = new PowerRenameDialog(selectedImages);
+                    dlg.ShowDialog();
+                };
+                parent.DropDownItems.Add(powerRename);
+            }
+
+            menu.Items.Add(parent);
             return menu;
+        }
+
+        /// <summary>The directly-selected supported image files (no folder expansion).</summary>
+        private List<string> SelectedImageFiles()
+        {
+            var files = new List<string>();
+            foreach (var path in SelectedItemPaths)
+            {
+                if (!Directory.Exists(path) && SupportedExtensions.Contains(Path.GetExtension(path)))
+                    files.Add(path);
+            }
+            return files;
+        }
+
+        private ToolStripMenuItem BuildRotateItem(string label, int degrees)
+        {
+            var item = new ToolStripMenuItem(label);
+            item.Click += (_, __) => RunRotate(degrees);
+            return item;
+        }
+
+        private ToolStripMenuItem BuildConvertItem(string label, string extension)
+        {
+            var item = new ToolStripMenuItem(label);
+            item.Click += (_, __) => RunConvert(extension);
+            return item;
         }
 
         private ToolStripMenuItem BuildPresetItem(SizePreset preset)
@@ -205,10 +299,61 @@ namespace SVGToolsShell
             }
         }
 
-        /// <summary>
-        /// Writes a job file for the selected images and hands it to the worker.
-        /// </summary>
         private void RunResize(SizeSpec spec, bool allowUpscale)
+            => LaunchJob("resize", spec, rotateDegrees: 0, allowUpscale: allowUpscale);
+
+        private void RunRotate(int degrees)
+            => LaunchJob("rotate", new SizeSpec(), rotateDegrees: degrees, allowUpscale: true);
+
+        private void RunConvert(string extension)
+            => LaunchJob("convert", new SizeSpec(), rotateDegrees: 0, allowUpscale: true, format: extension);
+
+        /// <summary>
+        /// Reads the image's current EXIF/IPTC values with the bundled ExifTool and
+        /// opens the metadata editor. Unlike resize/rotate/convert this doesn't use
+        /// the worker — ExifTool is a separate process, so it's safe to run directly,
+        /// and reading synchronously lets the dialog prefill the current values.
+        /// </summary>
+        private void RunEditMetadata(string filePath)
+        {
+            if (ExifTool.Locate() is null)
+            {
+                MessageBox.Show(
+                    "exiftool.exe was not found next to the shell extension.\n"
+                    + "Reinstall so ExifTool ships alongside the handler.",
+                    "SVG Tools", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            ImageMetadata current;
+            var previousCursor = Cursor.Current;
+            Cursor.Current = Cursors.WaitCursor;
+            try
+            {
+                current = ExifTool.Read(filePath);
+            }
+            catch (Exception ex)
+            {
+                Cursor.Current = previousCursor;
+                MessageBox.Show(
+                    $"Could not read the image's metadata:\n{ex.Message}",
+                    "SVG Tools", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            finally
+            {
+                Cursor.Current = previousCursor;
+            }
+
+            using var dlg = new MetadataDialog(filePath, current);
+            dlg.ShowDialog();
+        }
+
+        /// <summary>
+        /// Collects the selected images, writes a job file, and hands it to the
+        /// worker. Shared by every operation (resize, rotate, convert, …).
+        /// </summary>
+        private void LaunchJob(string operation, SizeSpec spec, int rotateDegrees, bool allowUpscale, string format = "")
         {
             var files = CollectImageFiles();
 
@@ -216,7 +361,7 @@ namespace SVGToolsShell
             {
                 MessageBox.Show(
                     "No supported images were found in the selection.",
-                    "Image Resizer", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    "SVG Tools", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -226,20 +371,20 @@ namespace SVGToolsShell
                 MessageBox.Show(
                     "ImageResizer.Worker.exe was not found next to the shell extension.\n"
                     + "Reinstall so the worker ships alongside the handler.",
-                    "Image Resizer", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    "SVG Tools", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
             string jobPath;
             try
             {
-                jobPath = WriteJobFile(spec, files, allowUpscale, _settings.JpegQuality);
+                jobPath = WriteJobFile(operation, spec, rotateDegrees, format, files, allowUpscale, _settings.JpegQuality);
             }
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Could not write the resize job:\n{ex.Message}",
-                    "Image Resizer", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    $"Could not write the job file:\n{ex.Message}",
+                    "SVG Tools", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -258,8 +403,8 @@ namespace SVGToolsShell
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Could not start the resize worker:\n{ex.Message}",
-                    "Image Resizer", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    $"Could not start the worker:\n{ex.Message}",
+                    "SVG Tools", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -316,10 +461,20 @@ namespace SVGToolsShell
         /// dependency; the shape and casing match what the worker deserializes
         /// (PascalCase properties, numeric enum for <see cref="SizeKind"/>).
         /// </summary>
-        private static string WriteJobFile(SizeSpec spec, IReadOnlyList<string> files, bool allowUpscale, int jpegQuality)
+        private static string WriteJobFile(
+            string operation, SizeSpec spec, int rotateDegrees, string format,
+            IReadOnlyList<string> files, bool allowUpscale, int jpegQuality)
         {
             var sb = new StringBuilder();
-            sb.Append("{\"Size\":{");
+            sb.Append('{');
+            sb.Append("\"Operation\":");
+            AppendJsonString(sb, operation);
+            sb.Append(',');
+            sb.Append("\"RotateDegrees\":").Append(rotateDegrees.ToString(CultureInfo.InvariantCulture)).Append(',');
+            sb.Append("\"Format\":");
+            AppendJsonString(sb, format ?? "");
+            sb.Append(',');
+            sb.Append("\"Size\":{");
             sb.Append("\"Kind\":").Append((int)spec.Kind).Append(',');
             sb.Append("\"Percent\":")
               .Append(spec.Percent.ToString("R", CultureInfo.InvariantCulture)).Append(',');

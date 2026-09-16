@@ -44,6 +44,32 @@ namespace ImageTools.Core.Tests
             Assert.True(job.AllowUpscale);
             Assert.Empty(job.Files);
             Assert.NotNull(job.Size);
+            Assert.Equal("resize", job.Operation);
+            Assert.Equal(0, job.RotateDegrees);
+        }
+
+        [Fact]
+        public void OperationDefaultsToResize_WhenOmittedFromJson()
+        {
+            // Old job files (pre-rotate) have no Operation/RotateDegrees fields.
+            var back = JsonSerializer.Deserialize<ResizeJob>(
+                "{\"Size\":{\"Kind\":0,\"Percent\":50},\"Files\":[\"a.jpg\"]}");
+
+            Assert.NotNull(back);
+            Assert.Equal("resize", back!.Operation);
+            Assert.Equal(0, back.RotateDegrees);
+        }
+
+        [Fact]
+        public void RotateJob_RoundTrips()
+        {
+            var job = new ResizeJob { Operation = "rotate", RotateDegrees = 270 };
+            job.Files.Add("a.jpg");
+
+            var back = JsonSerializer.Deserialize<ResizeJob>(JsonSerializer.Serialize(job));
+
+            Assert.Equal("rotate", back!.Operation);
+            Assert.Equal(270, back.RotateDegrees);
         }
 
         [Fact]

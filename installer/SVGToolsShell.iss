@@ -26,7 +26,7 @@
 ; ============================================================================
 
 #define AppName        "SVG Tools Shell Extension"
-#define AppVersion      "0.2.1"
+#define AppVersion      "0.3.0"
 #define AppPublisher    "Richard McQuiston"
 #define AppId           "{{2ED7E239-89E8-4DAA-BB1D-40191EA65D70}"
 ; GUIDs are written as registry data, where Inno would treat a leading "{" as
@@ -80,6 +80,12 @@ Source: "{#BuildDir}\*.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#BuildDir}\*.config"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 ; Read-only post-install health check for the registered handlers.
 Source: "..\verify-registration.ps1"; DestDir: "{app}"; Flags: ignoreversion
+; ExifTool runtime for the "Edit metadata…" action. exiftool.exe itself is covered
+; by the *.exe glob above; its required exiftool_files\ Perl runtime folder is a
+; subdirectory, so install it recursively. skipifsourcedoesntexist keeps the build
+; working if ExifTool wasn't staged (the menu item then reports it's missing).
+Source: "{#BuildDir}\exiftool_files\*"; DestDir: "{app}\exiftool_files"; \
+    Flags: ignoreversion recursesubdirs createallsubdirs skipifsourcedoesntexist
 
 [Registry]
 ; --- Hook the handler onto the .svg ProgId (merged HKCR view) --------------

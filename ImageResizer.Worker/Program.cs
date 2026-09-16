@@ -56,12 +56,18 @@ namespace ImageResizer.Worker
 
             var outputs = new List<string>();
             var errors = new List<string>();
+            var operation = (job.Operation ?? "resize").Trim().ToLowerInvariant();
 
             foreach (var file in job.Files)
             {
                 try
                 {
-                    outputs.Add(ResizeEngine.ResizeFile(file, job));
+                    switch (operation)
+                    {
+                        case "rotate":  outputs.Add(RotateEngine.RotateFile(file, job)); break;
+                        case "convert": outputs.Add(ConvertEngine.ConvertFile(file, job)); break;
+                        default:        outputs.Add(ResizeEngine.ResizeFile(file, job)); break;
+                    }
                 }
                 catch (Exception ex)
                 {

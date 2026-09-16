@@ -2,7 +2,50 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.3.0] - 2026-09-16
+
+### Added
+- **Edit metadata…** — shown under the SVGToolsShell menu when a single
+  metadata-capable image (`.jpg`, `.jpeg`, `.tif`, `.tiff`, `.png`, `.webp`) is
+  selected. A dialog edits common **EXIF** (Artist, Copyright, Description, Date
+  taken) and **IPTC** (Title, Caption, Keywords, Creator, City, Country) fields,
+  prefilled from the file. Editing is **lossless and non-destructive**: the write
+  is done by a bundled **ExifTool**, which keeps a `<name>_original` backup of the
+  untouched file. The read (`-csv`) / write (`-Group:Tag=value`) command lines and
+  the field ⇄ tag mapping live in `ImageTools.Core` (`ExifToolCommand`, `Csv`) and
+  are unit-tested; the handler shells out to `exiftool.exe` directly (a separate
+  process, so no native code loads inside Explorer). ExifTool is fetched at build
+  time (`tools/fetch-exiftool.ps1`), not committed, and ships next to the handler.
+- **Power Rename…** — a PowerToys-style batch-rename dialog, shown under the
+  SVGToolsShell menu only when two or more image files are selected. Search/
+  replace (literal or **regex** with `$1` group substitutions), case-sensitivity,
+  all-vs-first occurrence, apply-to scope (name / extension / whole filename),
+  and a `${n}` counter (with start + zero-padding). A live preview shows
+  Original → New name and flags conflicts (duplicate targets or names already on
+  disk), which are skipped; renames use `File.Move` so nothing is overwritten.
+  The matching logic lives in `ImageTools.Core` (`RenameEngine`/`RenameOptions`)
+  and is unit-tested.
+- **Convert to** submenu — PNG, JPG, TIFF, BMP, and **WebP**. Writes a
+  non-destructive sibling with the new extension (`Photo.png`; `Photo_2.png` if
+  taken or when the target extension matches the source, so the original is never
+  overwritten). Powered by **Magick.NET (ImageMagick)** in the worker, which
+  handles formats GDI+ can't (WebP); EXIF orientation is baked in. JPEG output
+  honors the configured quality.
+- **Rotate** submenu on the image handler — 90°, 180°, and 270° (clockwise).
+  Each writes a non-destructive sibling (`Photo_rot90.jpg`, …) via the worker,
+  baking in EXIF orientation first (and dropping the orientation tag so viewers
+  don't double-rotate). Works on a selection or a folder, like Resize.
+
+### Changed
+- The image handler's actions are now grouped under a single top-level
+  **SVGToolsShell** parent menu (**SVGToolsShell ▸ Resize Images**, **▸ Rotate**,
+  **▸ Convert to**) instead of a top-level "Resize Images" item, keeping the
+  context menu tidy as more tools are added. The worker's `ResizeJob` gained an
+  `Operation` field (defaults to `"resize"`, so older job files still work) plus
+  `RotateDegrees` and `Format`.
+- The worker now depends on **Magick.NET-Q8-x64** (ImageMagick) for conversion;
+  it ships alongside the worker (installer bundles its DLLs). Resize and rotate
+  remain on GDI+.
 
 ## [0.2.1] - 2026-09-16
 
