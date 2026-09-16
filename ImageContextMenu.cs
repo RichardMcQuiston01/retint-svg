@@ -129,22 +129,45 @@ namespace SVGToolsShell
 
             var menu = new ContextMenuStrip();
 
-            var resize = new ToolStripMenuItem("Resize Images")
+            // All image actions live under one top-level parent so the context
+            // menu stays tidy as more tools are added.
+            var parent = new ToolStripMenuItem("SVGToolsShell")
             {
                 Image = CreateIcon(),
+            };
+
+            // ── Resize Images ▸ ───────────────────────────────────────────────
+            var resize = new ToolStripMenuItem("Resize Images")
+            {
                 ToolTipText = "Create resized copies alongside the originals "
                     + "(a folder resizes the images inside it)",
             };
-
             foreach (var preset in _settings.Presets)
                 resize.DropDownItems.Add(BuildPresetItem(preset));
-
             resize.DropDownItems.Add(new ToolStripSeparator());
             resize.DropDownItems.Add(BuildCustomItem());
             resize.DropDownItems.Add(BuildEditPresetsItem());
+            parent.DropDownItems.Add(resize);
 
-            menu.Items.Add(resize);
+            // ── Rotate ▸ ──────────────────────────────────────────────────────
+            var rotate = new ToolStripMenuItem("Rotate")
+            {
+                ToolTipText = "Write a rotated copy alongside each image",
+            };
+            rotate.DropDownItems.Add(BuildRotateItem("90° clockwise", 90));
+            rotate.DropDownItems.Add(BuildRotateItem("180°", 180));
+            rotate.DropDownItems.Add(BuildRotateItem("270° clockwise", 270));
+            parent.DropDownItems.Add(rotate);
+
+            menu.Items.Add(parent);
             return menu;
+        }
+
+        private ToolStripMenuItem BuildRotateItem(string label, int degrees)
+        {
+            var item = new ToolStripMenuItem(label);
+            item.Click += (_, __) => RunRotate(degrees);
+            return item;
         }
 
         private ToolStripMenuItem BuildPresetItem(SizePreset preset)
@@ -205,10 +228,17 @@ namespace SVGToolsShell
             }
         }
 
-        /// <summary>
-        /// Writes a job file for the selected images and hands it to the worker.
-        /// </summary>
         private void RunResize(SizeSpec spec, bool allowUpscale)
+            => LaunchJob("resize", spec, rotateDegrees: 0, allowUpscale: allowUpscale);
+
+        private void RunRotate(int degrees)
+            => LaunchJob("rotate", new SizeSpec(), rotateDegrees: degrees, allowUpscale: true);
+
+        /// <summary>
+        /// Collects the selected images, writes a job file, and hands it to the
+        /// worker. Shared by every operation (resize, rotate, …).
+        /// </summary>
+        private void LaunchJob(string operation, SizeSpec spec, int rotateDegrees, bool allowUpscale)
         {
             var files = CollectImageFiles();
 
@@ -216,7 +246,7 @@ namespace SVGToolsShell
             {
                 MessageBox.Show(
                     "No supported images were found in the selection.",
-                    "Image Resizer", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    "SVG Tools", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -226,20 +256,20 @@ namespace SVGToolsShell
                 MessageBox.Show(
                     "ImageResizer.Worker.exe was not found next to the shell extension.\n"
                     + "Reinstall so the worker ships alongside the handler.",
-                    "Image Resizer", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    "SVG Tools", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
             string jobPath;
             try
             {
-                jobPath = WriteJobFile(spec, files, allowUpscale, _settings.JpegQuality);
+                jobPath = WriteJobFile(operation, spec, rotateDegrees, files, allowUpscale, _settings.JpegQuality);
             }
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Could not write the resize job:\n{ex.Message}",
-                    "Image Resizer", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    $"Could not write the job file:\n{ex.Message}",
+                    "SVG Tools", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -258,8 +288,8 @@ namespace SVGToolsShell
             catch (Exception ex)
             {
                 MessageBox.Show(
-                    $"Could not start the resize worker:\n{ex.Message}",
-                    "Image Resizer", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    $"Could not start the worker:\n{ex.Message}",
+                    "SVG Tools", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -316,10 +346,17 @@ namespace SVGToolsShell
         /// dependency; the shape and casing match what the worker deserializes
         /// (PascalCase properties, numeric enum for <see cref="SizeKind"/>).
         /// </summary>
-        private static string WriteJobFile(SizeSpec spec, IReadOnlyList<string> files, bool allowUpscale, int jpegQuality)
+        private static string WriteJobFile(
+            string operation, SizeSpec spec, int rotateDegrees,
+            IReadOnlyList<string> files, bool allowUpscale, int jpegQuality)
         {
             var sb = new StringBuilder();
-            sb.Append("{\"Size\":{");
+            sb.Append('{');
+            sb.Append("\"Operation\":");
+            AppendJsonString(sb, operation);
+            sb.Append(',');
+            sb.Append("\"RotateDegrees\":").Append(rotateDegrees.ToString(CultureInfo.InvariantCulture)).Append(',');
+            sb.Append("\"Size\":{");
             sb.Append("\"Kind\":").Append((int)spec.Kind).Append(',');
             sb.Append("\"Percent\":")
               .Append(spec.Percent.ToString("R", CultureInfo.InvariantCulture)).Append(',');

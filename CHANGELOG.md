@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+- **Rotate** submenu on the image handler — 90°, 180°, and 270° (clockwise).
+  Each writes a non-destructive sibling (`Photo_rot90.jpg`, …) via the worker,
+  baking in EXIF orientation first (and dropping the orientation tag so viewers
+  don't double-rotate). Works on a selection or a folder, like Resize.
+
+### Changed
+- The image handler's actions are now grouped under a single top-level
+  **SVGToolsShell** parent menu (**SVGToolsShell ▸ Resize Images**, **▸ Rotate**)
+  instead of a top-level "Resize Images" item, keeping the context menu tidy as
+  more tools are added. The worker's `ResizeJob` gained an `Operation` field
+  (defaults to `"resize"`, so older job files still work) plus `RotateDegrees`.
+
 ## [0.2.1] - 2026-09-16
 
 ### Added

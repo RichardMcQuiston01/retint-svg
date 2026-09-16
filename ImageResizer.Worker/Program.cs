@@ -56,12 +56,15 @@ namespace ImageResizer.Worker
 
             var outputs = new List<string>();
             var errors = new List<string>();
+            var rotate = string.Equals(job.Operation, "rotate", StringComparison.OrdinalIgnoreCase);
 
             foreach (var file in job.Files)
             {
                 try
                 {
-                    outputs.Add(ResizeEngine.ResizeFile(file, job));
+                    outputs.Add(rotate
+                        ? RotateEngine.RotateFile(file, job)
+                        : ResizeEngine.ResizeFile(file, job));
                 }
                 catch (Exception ex)
                 {
