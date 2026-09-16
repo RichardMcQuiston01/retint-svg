@@ -68,6 +68,14 @@ jobs:
         shell: bash
         run: cp -r ImageResizer.Worker/bin/Release/net48/. bin/Release/net48/
 
+      # Bundle the ExifTool Windows build (exiftool.exe + exiftool_files\) next to
+      # the handler for the "Edit metadata…" action. Fetched at build time rather
+      # than committed (see tools/fetch-exiftool.ps1); the ~6 MB package rides
+      # along in the artifact and the installer picks it up.
+      - name: Fetch ExifTool
+        shell: pwsh
+        run: ./tools/fetch-exiftool.ps1 -Destination bin/Release/net48
+
       - name: Upload build output
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

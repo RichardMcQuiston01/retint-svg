@@ -25,6 +25,8 @@ All image actions are grouped under a single **SVGToolsShell** parent menu:
 
 **Convert to ▸** — PNG, JPG, TIFF, BMP, or **WebP**; writes a copy with the new extension (`Photo.png`). Powered by ImageMagick (Magick.NET) in the worker.
 
+**Edit metadata…** (shown when a single `.jpg`, `.jpeg`, `.tif`, `.tiff`, `.png`, or `.webp` is selected) — a dialog for common **EXIF** (Artist, Copyright, Description, Date taken) and **IPTC** (Title, Caption, Keywords, Creator, City, Country) fields, prefilled from the file. Editing is lossless and non-destructive — a bundled [ExifTool](https://exiftool.org/) writes the changes and keeps a `<name>_original` backup (see [Editing image metadata](#editing-image-metadata)).
+
 **Power Rename…** (shown when two or more images are selected) — a PowerToys-style batch rename: literal or **regex** search/replace (with `$1` groups), case and occurrence options, apply-to scope (name / extension / whole filename), and a `${n}` counter. A live preview shows Original → New name and flags conflicts, which are skipped; renames never overwrite.
 
 **Folders** — right-clicking a folder applies the resize/rotate/convert actions to its top-level images (the menu shows only when the folder contains supported images).
@@ -130,6 +132,23 @@ Web 800x600          = 800x600   ; exact width x height
 ```
 
 A missing or malformed file (or an unparseable preset line) falls back to the built-in defaults, so the menu never fails to build.
+
+## Editing image metadata
+
+Right-click a single image (`.jpg`, `.jpeg`, `.tif`, `.tiff`, `.png`, or `.webp`) and choose **SVGToolsShell → Edit metadata…**. The dialog opens prefilled with the file's current values and edits two groups of fields:
+
+- **EXIF** — Artist, Copyright, Description, Date taken (`YYYY:MM:DD HH:MM:SS`)
+- **IPTC** — Title, Caption, Keywords (comma-separated), Creator, City, Country
+
+Saving writes the changes with a bundled copy of [ExifTool](https://exiftool.org/), which edits the file in place **losslessly** (the image pixels are untouched) and keeps a backup of the original alongside it, named `<file>_original`. Clearing a field and saving removes that tag. If a field is left blank it is written as empty (i.e. cleared).
+
+ExifTool's ~6 MB Windows build is **not** committed to the repository — it is installed at build time by `tools/fetch-exiftool.ps1` (run automatically in CI) and shipped next to the handler by the installer. The script installs ExifTool via [Chocolatey](https://chocolatey.org/) (`choco install exiftool`) and copies `exiftool.exe` (plus its `exiftool_files\` runtime, if present) into the build output. A plain local `dotnet build` does not run it; to test metadata editing locally, run the script yourself (Chocolatey required):
+
+```powershell
+pwsh tools/fetch-exiftool.ps1 -Destination bin/Release/net48
+```
+
+If `exiftool.exe` isn't present next to the handler, the menu item still appears but reports that ExifTool is missing.
 
 ## Extending
 

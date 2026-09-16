@@ -58,6 +58,15 @@ namespace SVGToolsShell
                 ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tif", ".tiff",
             };
 
+        // Formats with meaningful EXIF/IPTC support (a subset of the above) — the
+        // "Edit metadata…" item is offered only for these. .bmp/.gif carry no EXIF
+        // or IPTC, so editing them would be pointless.
+        private static readonly HashSet<string> MetadataExtensions =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ".jpg", ".jpeg", ".tif", ".tiff", ".png", ".webp",
+            };
+
         // Presets + JPEG quality + upscale default, read from the user's config
         // file each time the menu is built (so edits apply without reinstalling).
         // Never null — a missing/unreadable file falls back to the defaults.
@@ -171,8 +180,22 @@ namespace SVGToolsShell
             convert.DropDownItems.Add(BuildConvertItem("WebP", "webp"));
             parent.DropDownItems.Add(convert);
 
-            // ── Power Rename ▸ (only for a multi-file image selection) ─────────
             var selectedImages = SelectedImageFiles();
+
+            // ── Edit metadata… (only for a single, metadata-capable image) ─────
+            if (selectedImages.Count == 1
+                && MetadataExtensions.Contains(Path.GetExtension(selectedImages[0])))
+            {
+                var editMeta = new ToolStripMenuItem("Edit metadata…")
+                {
+                    ToolTipText = "View and edit EXIF/IPTC fields (keeps an *_original backup)",
+                };
+                var metaFile = selectedImages[0];
+                editMeta.Click += (_, __) => RunEditMetadata(metaFile);
+                parent.DropDownItems.Add(editMeta);
+            }
+
+            // ── Power Rename ▸ (only for a multi-file image selection) ─────────
             if (selectedImages.Count >= 2)
             {
                 parent.DropDownItems.Add(new ToolStripSeparator());
@@ -284,6 +307,47 @@ namespace SVGToolsShell
 
         private void RunConvert(string extension)
             => LaunchJob("convert", new SizeSpec(), rotateDegrees: 0, allowUpscale: true, format: extension);
+
+        /// <summary>
+        /// Reads the image's current EXIF/IPTC values with the bundled ExifTool and
+        /// opens the metadata editor. Unlike resize/rotate/convert this doesn't use
+        /// the worker — ExifTool is a separate process, so it's safe to run directly,
+        /// and reading synchronously lets the dialog prefill the current values.
+        /// </summary>
+        private void RunEditMetadata(string filePath)
+        {
+            if (ExifTool.Locate() is null)
+            {
+                MessageBox.Show(
+                    "exiftool.exe was not found next to the shell extension.\n"
+                    + "Reinstall so ExifTool ships alongside the handler.",
+                    "SVG Tools", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            ImageMetadata current;
+            var previousCursor = Cursor.Current;
+            Cursor.Current = Cursors.WaitCursor;
+            try
+            {
+                current = ExifTool.Read(filePath);
+            }
+            catch (Exception ex)
+            {
+                Cursor.Current = previousCursor;
+                MessageBox.Show(
+                    $"Could not read the image's metadata:\n{ex.Message}",
+                    "SVG Tools", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            finally
+            {
+                Cursor.Current = previousCursor;
+            }
+
+            using var dlg = new MetadataDialog(filePath, current);
+            dlg.ShowDialog();
+        }
 
         /// <summary>
         /// Collects the selected images, writes a job file, and hands it to the
