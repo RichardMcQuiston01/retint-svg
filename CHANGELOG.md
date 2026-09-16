@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-16
+
 ### Added
 - Installer options: the setup wizard now offers two opt-in checkboxes —
   **"Configure image-resize presets now"** (seeds the settings file via the
