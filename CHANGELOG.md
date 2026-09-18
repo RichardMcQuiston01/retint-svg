@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.4.0] - 2026-09-16
 
 ### Added
 - **Code signing (Azure Trusted Signing)** — the CI `installer` job now signs the
@@ -12,6 +12,10 @@ All notable changes to this project will be documented in this file.
   manual dispatch) and only when the signing secrets are configured, so PRs and
   routine pushes remain unsigned and independent of the secrets. See README
   "Code signing" for the required Azure setup and repository secrets.
+
+## [0.3.0] - 2026-09-16
+
+### Added
 - **Edit metadata…** — shown under the SVGToolsShell menu when a single
   metadata-capable image (`.jpg`, `.jpeg`, `.tif`, `.tiff`, `.png`, `.webp`) is
   selected. A dialog edits common **EXIF** (Artist, Copyright, Description, Date
