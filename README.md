@@ -1,6 +1,6 @@
 # SVGToolsShell
 
-Windows Explorer shell extensions that add two context menus: **SVG Tools** (Re-Tint) when you right-click an `.svg` file, and a **SVGToolsShell** menu when you right-click a raster image or a folder of images. Both write new files alongside the originals — nothing is ever overwritten.
+Two Windows Explorer shell extensions. Right-click a `.svg` file to **re-tint** it (recolor black or white fills/strokes to any color) or **flatten** its layers; right-click an image — or a folder of images — to **resize**, **rotate**, **convert** to PNG/JPG/TIFF/BMP/**WebP**, **edit EXIF/IPTC metadata**, or **Power Rename** a whole batch. Every action writes new files alongside the originals — nothing is ever overwritten.
 
 ## Features
 
