@@ -36,7 +36,7 @@
 #define ComGuid         "{{FC258F52-702A-4AC2-BA22-43F59C7DC682}"
 #define ImgGuid         "{{25EF2E9B-582C-46C0-9FF2-EF10313F09D1}"
 #define BuildDir        "..\bin\Release\net48"
-#define DonateUrl       "https://donate.stripe.com/00w5kD3Gj1Xo9v7gVOcs800"
+#define DonateUrl       "https://ko-fi.com/P1V529Z7ZP"
 
 [Setup]
 AppId={#AppId}

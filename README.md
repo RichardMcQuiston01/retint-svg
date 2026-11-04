@@ -229,7 +229,7 @@ Once the secrets are set, publish a release (or run the workflow manually) and t
 
 ## Support
 
-If this library saved you some reverse-engineering, consider [buying me a coffee](https://donate.stripe.com/00w5kD3Gj1Xo9v7gVOcs800). ☕
+If this library saved you some reverse-engineering, consider [buying me a coffee](https://ko-fi.com/P1V529Z7ZP). ☕
 
 ## Copyright
 

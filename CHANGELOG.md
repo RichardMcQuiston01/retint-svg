@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+
+- Donations now point at Ko-fi instead of Stripe: the README support link, the installer's donation page link and a new `.github/FUNDING.yml`.
+
 ## [0.4.0] - 2026-09-16
 
 ### Added
